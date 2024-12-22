@@ -8,11 +8,12 @@ export class ThreadController {
        
       let transferable = []
 
-       if (payload.src.length !== 0){ 
+       if (payload.textures){ 
 
         payload.offscreenCanvas = new OffscreenCanvas(0,0)
 
         transferable.push(payload.offscreenCanvas)
+
        } 
          
        

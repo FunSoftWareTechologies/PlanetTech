@@ -13,13 +13,19 @@ export function workersSRC(currentGeometry,params){
     async function imageReader(payload){
 
         // Load the image
-        const response = await fetch(payload.src);
+
+        let direction  = payload.direction
+
+        const response = await fetch(payload.textures[direction] );
+
         const blob     = await response.blob();
+
         const imageBitmap = await createImageBitmap(blob);
 
-        const canvas = payload.offscreenCanvas
+        const canvas  = payload.offscreenCanvas
 
-        canvas.width = imageBitmap.width;
+        canvas.width  = imageBitmap.width;
+
         canvas.height = imageBitmap.height;
 
         const ctx = canvas.getContext("2d");
@@ -37,9 +43,15 @@ export function workersSRC(currentGeometry,params){
 
         let imageBitmapResult
 
-        if (payload.src) 
+        let transferable = []
+
+        if (payload.textures){ 
             
             imageBitmapResult = await imageReader(payload)
+
+            transferable.push(imageBitmapResult)
+            
+            }
 
 
         const positionBuffer = new Float32Array(payload.sharedArrayPosition );
@@ -75,13 +87,9 @@ export function workersSRC(currentGeometry,params){
         normalBuffer.set(geometry.attributes.normal.array)
 
         return{
-            positionBuffer,
-            normalBuffer,
-            uvBuffer,
-            indexBuffer,
-            dirVectBuffer,
             centerdPosition:centerdPosition.toArray(),
-            imageBitmapResult
+            imageBitmapResult,
+            transferable,
         }
     }
         
@@ -91,7 +99,7 @@ export function workersSRC(currentGeometry,params){
         self.postMessage({
             centerdPosition: outputBuffers.centerdPosition,
             imageBitmapResult: outputBuffers.imageBitmapResult
-        },[outputBuffers.imageBitmapResult])
+        }, outputBuffers.transferable)
     }
     `
 }

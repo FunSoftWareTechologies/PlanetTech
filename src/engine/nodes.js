@@ -78,7 +78,7 @@ export class QuadTreeNode extends Node{
 
             let M = new THREE.Vector3() 
             
-            let radius =  this.params.quadTreeController.config.radius
+            let radius =  this.params.controller.config.radius
 
             const axis = this.params.direction.includes('z') ? 'z' : this.params.direction.includes('x') ? 'x' : 'y';
 
@@ -144,7 +144,7 @@ export class QuadTreeNode extends Node{
 
         let axis = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
 
-        let resolution = primitive.quadTreeController.config.arrybuffers[(size/2)].geometryData.parameters.widthSegments
+        let resolution = primitive.controller.config.arrybuffers[(size/2)].geometryData.parameters.widthSegments
          
         size = (size/2)
 

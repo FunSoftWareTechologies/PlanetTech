@@ -1,7 +1,7 @@
 import * as THREE  from 'three/tsl';
 import { generateKey,isWithinBounds } from '../utils.js'
  
-export class QuadTreeController {
+export class Controller {
 
   constructor(config = {}) {
     let shardedData = {
@@ -17,10 +17,10 @@ export class QuadTreeController {
       material: new THREE.MeshBasicMaterial({ color: "grey" }),
       callBacks:{
         afterMeshNodeCreation: node => undefined,
-        afterQuadTreeNodeCreation: node => undefined
+        afterQuadTreeNodeCreation: node => undefined,
+        setTextures: () => undefined,
       },
-      userDefinedPayload:{}
-    }
+     }
     this.config = Object.assign( shardedData, config )
   }
 
@@ -60,6 +60,13 @@ export class QuadTreeController {
       }
     }
   } 
+
+  setCallBacks(callBacks){
+    this.config.callBacks = Object.assign(this.config.callBacks,callBacks) 
+  }
+
+ 
+
 }
 
 
