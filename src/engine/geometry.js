@@ -397,3 +397,20 @@ export class NormalizedQuadGeometry extends QuadGeometry {
 
 	}
 }
+
+
+export const geometryType=(primitive)=>{
+	
+    let geometryClass     = QuadGeometry  
+    let additionalPayload = { }
+
+    if (primitive.type === 'Sphere'){
+       geometryClass     =  NormalizedQuadGeometry 
+       additionalPayload = { radius: primitive.controller.config.radius }
+    }
+
+	return {
+		geometryClass,
+		additionalPayload
+	}
+}

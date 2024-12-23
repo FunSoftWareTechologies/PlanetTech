@@ -1,5 +1,4 @@
 import * as THREE from 'three/tsl'
-import { isSphere } from './primitives.js'
 import { project, createLocations, isWithinBounds, cordinate } from './utils.js';
 
 class Node extends THREE.Object3D{ 
@@ -113,7 +112,7 @@ export class QuadTreeNode extends Node{
 
             createLocations(size, this.params.offset, axis).forEach(e=>{
 
-                const A = this.localToWorld( new THREE.Vector3(...e) )
+                const A = this.localToWorld( new THREE.Vector3(...e).add(primitive.position) )
 
                 this.boundingBox.expandByPoint(A.divideScalar(2))
 
@@ -123,8 +122,6 @@ export class QuadTreeNode extends Node{
             })
 
             M.divideScalar(4) 
-
-            M.add(new THREE.Vector3().copy(primitive.position)) 
 
             this. boundingBox.expandByPoint(M)
 

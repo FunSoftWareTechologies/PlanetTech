@@ -142,4 +142,83 @@ export const meshInit = (geometry, material,centerdPosition ) => {
   mesh.position.set(...centerdPosition );
 
   return mesh
+
+}
+
+
+export const createDimensions = ( params ) => {
+
+  let { i_, j_, k, _index, primitive } = params
+
+  let quadTreeNodePZ = primitive.createQuadtreeNode({ 
+    matrixRotationData: {propMehtod:'',input:0}, 
+    offset: [i_,-j_,k],
+    index:_index,
+    direction:'+z',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodePZ)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodePZ})
+
+  let quadTreeNodeNZ = primitive.createQuadtreeNode({ 
+    matrixRotationData:{propMehtod:'makeRotationY',input:Math.PI }, 
+    offset:  [i_,-j_,-k],
+    index: _index,
+    direction:'-z',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodeNZ)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodeNZ})
+
+  let quadTreeNodePX = primitive.createQuadtreeNode({ 
+    matrixRotationData:{propMehtod:'makeRotationY',input:Math.PI/2 }, 
+    offset: [k,-j_,-i_],
+    index: _index,
+    direction:'+x',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodePX)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodePX})
+
+  let quadTreeNodeNX = primitive.createQuadtreeNode({ 
+    matrixRotationData:{propMehtod:'makeRotationY',input:-Math.PI/2 }, 
+    offset: [-k,-j_,-i_],
+    index: _index,
+    direction:'-x',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodeNX)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodeNX})
+
+  let quadTreeNodePY = primitive.createQuadtreeNode({ 
+    matrixRotationData:{propMehtod:'makeRotationX',input:-Math.PI/2 }, 
+    offset: [i_,k,j_],
+    index: _index,
+    direction:'+y',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodePY)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodePY})
+
+  let quadTreeNodeNY = primitive.createQuadtreeNode({ 
+    matrixRotationData:{propMehtod:'makeRotationX',input:Math.PI/2 },  
+    offset: [i_,-k,j_],
+    index: _index,
+    direction:'-y',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodeNY)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodeNY})
+
+}
+
+
+export const createDimension = ( params ) => {
+
+  let { i_, j_, k, _index, primitive } = params
+
+  let quadTreeNodePZ = primitive.createQuadtreeNode({ 
+    matrixRotationData: {propMehtod:'',input:0}, 
+    offset: [i_,-j_,k],
+    index:_index,
+    direction:'+z',
+  })
+  primitive.quadTree.rootNodes.push(quadTreeNodePZ)
+  primitive.createMeshNode({quadTreeNode:quadTreeNodePZ})
+
+
 }
