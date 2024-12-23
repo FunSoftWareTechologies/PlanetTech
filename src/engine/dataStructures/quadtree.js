@@ -101,7 +101,7 @@ export class QuadTree {
         )
       );
 
-      for (const [key, value] of primitive.nodes.entries()) {
+      for (const [key, value] of primitive.meshNodes.entries()) {
         if (!visibleMeshNodes.has(key)) {
           const meshNode = await value;
           meshNode.hideMesh();
@@ -120,9 +120,9 @@ export class QuadTree {
 
       const key = generateKey(node);
   
-      if (primitive.nodes.has(key)) {
+      if (primitive.meshNodes.has(key)) {
 
-        const meshNode =  await primitive.nodes.get(key)
+        const meshNode =  await primitive.meshNodes.get(key)
   
         meshNode.showMesh();
 
@@ -130,7 +130,7 @@ export class QuadTree {
 
       } else {
    
-        primitive.createMeshNode({quadTreeNode:node})
+        primitive._createMeshNodes({quadTreeNode:node})
   
         visibleMeshNodes.add(key);
       }

@@ -1,11 +1,12 @@
 import * as THREE from 'three/tsl'
 import { Controller,QuadTree } from './dataStructures/quadtree.js'
-import { QuadGeometry, NormalizedQuadGeometry,geometryType } from './geometry.js'
+import { geometrySelector } from './geometry.js'
 import { workersSRC } from './webWorker/workerThread.js'
 import { MeshNode,QuadTreeNode } from './nodes.js'
 import { generateKey,createCanvasTexture,bufferInit,threadingInit,geometryInit,meshInit,createDimensions,createDimension } from './utils.js'
  
 export const isSphere = obj => obj instanceof Sphere
+
  
 export class Primitive  extends THREE.Object3D{
   
@@ -19,13 +20,14 @@ export class Primitive  extends THREE.Object3D{
       depth:0
     }
 
-    this.nodes = new Map()
+    this.meshNodes = new Map()
+
     this.controller = new  Controller()
   }
 
   update(OBJECT3D){ this.quadTree.update(OBJECT3D,this) }
 
-  addNode(bounds,node){ this.nodes.set(bounds,node) }
+  addNode(bounds,node){ this.meshNodes.set(bounds,node) }
 
   createQuadTree({ levels }){
     Object.assign(this.controller.config,{
@@ -40,13 +42,9 @@ export class Primitive  extends THREE.Object3D{
     this.quadTree = new QuadTree()
   }
   
-  createPlane({
-    quadTreeNode,
-    meshNode,
-    parent,
-  }) {
+  createPlane({ quadTreeNode, meshNode,  parent, }) {
 
-    let {geometryClass ,additionalPayload  } = geometryType(this)
+    let {geometryClass ,additionalPayload  } = geometrySelector(this)
 
     const size = quadTreeNode.params.size
     const shardedData = this.controller.config.arrybuffers[size]
@@ -121,28 +119,33 @@ export class Primitive  extends THREE.Object3D{
 
   }
   
-  createMeshNode({  quadTreeNode, parent = this }){
 
-    let meshNode = new MeshNode( quadTreeNode.params, 'active' )
+  createMeshNodes(){
 
-    meshNode = this.createPlane({
-      quadTreeNode,
-      meshNode,
-      parent
-    })
+    this._createMeshNodes =({  quadTreeNode, parent = this })=>{
 
-    this.addNode(generateKey(quadTreeNode),meshNode)
-
-    return meshNode
-
+      let meshNode = new MeshNode( quadTreeNode.params, 'active' )
+  
+      meshNode = this.createPlane({
+        quadTreeNode,
+        meshNode,
+        parent
+      })
+  
+      this.addNode(generateKey(quadTreeNode),meshNode)
+  
+      return meshNode
+    }
   }
+  
+  _createMeshNodes(){}
 
   createDimensions(){
     const w = this.parameters.size
     const d = this.parameters.dimension
     const k = ((w/2)*d)
     const creation = (this.type === 'Quad') ? createDimension : createDimensions
-
+ 
     for (var i = 0; i < d; i++) {
       var i_ = ((i*(w-1))+i)+((-(w/2))*(d-1))
       for (var j = 0; j < d; j++) {
@@ -152,6 +155,7 @@ export class Primitive  extends THREE.Object3D{
       }
     }
   }
+
 }
 
 export class Quad extends Primitive{

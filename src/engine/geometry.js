@@ -399,8 +399,8 @@ export class NormalizedQuadGeometry extends QuadGeometry {
 }
 
 
-export const geometryType=(primitive)=>{
-	
+export const geometrySelector = (primitive) =>{
+
     let geometryClass     = QuadGeometry  
     let additionalPayload = { }
 
