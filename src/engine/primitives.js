@@ -2,62 +2,55 @@ import * as THREE from 'three/tsl'
 import { Controller,QuadTree } from './dataStructures/quadtree.js'
 import { geometrySelector } from './geometry.js'
 import { workersSRC } from './webWorker/workerThread.js'
-import { MeshNode,QuadTreeNode } from './nodes.js'
-import { generateKey,createCanvasTexture,bufferInit,threadingInit,geometryInit,meshInit,createDimensions,createDimension } from './utils.js'
+import { MeshNode,QuadTreeNode } from './dataStructures/nodes.js'
+import { createCanvasTexture,bufferInit,threadingInit,geometryInit,meshInit,createDimensions,createDimension } from './utils.js'
  
-export const isSphere = obj => obj instanceof Sphere
+export const isSphere = (obj) => obj instanceof Sphere;
 
- 
-export class Primitive  extends THREE.Object3D{
-  
-  constructor({ size, resolution, dimension }){
-    super()
-
-    this.parameters = {
-      size: size,
-      resolution: resolution,
-      dimension:  dimension,
-      depth:0
-    }
-
-    this.meshNodes = new Map()
-
-    this.controller = new  Controller()
+export class Primitive extends THREE.Object3D {
+  constructor({ size, resolution, dimension }) {
+    super();
+    this.parameters = { size, resolution, dimension, depth: 0 };
+    this.meshNodes  = new Map();
+    this.controller = new Controller();
+    this._createMeshNodes = () => {}; // NooOp Placeholder to avoid undefined errors
   }
 
-  update(OBJECT3D){ this.quadTree.update(OBJECT3D,this) }
-
-  addNode(bounds,node){ this.meshNodes.set(bounds,node) }
-
-  createQuadTree({ levels }){
-    Object.assign(this.controller.config,{
-      maxLevelSize:  this.parameters.size,
-      minLevelSize:  this.parameters.size/Math.pow(2,levels-1), 
-      minPolyCount:  this.parameters.resolution,
-      dimensions:    this.parameters.dimension,
-      }
-    )
-    this.controller.levels(levels)
-    this.controller.createArrayBuffers()
-    this.quadTree = new QuadTree()
+  update(object3D) {
+    this.quadTree.update(object3D, this);
   }
-  
-  createPlane({ quadTreeNode, meshNode,  parent, }) {
 
-    let {geometryClass ,additionalPayload  } = geometrySelector(this)
+  addNode(bounds, node) {
+    this.meshNodes.set(bounds, node);
+  }
 
-    const size = quadTreeNode.params.size
-    const shardedData = this.controller.config.arrybuffers[size]
-    const matrixRotationData = quadTreeNode.params.matrixRotationData
-    const offset = quadTreeNode.params.offset
-    const direction = quadTreeNode.params.direction
-    const resolution = quadTreeNode.params.segments
-    const material = this.controller.config.material
-    const afterMeshNodeCreation = this.controller.config.callBacks.afterMeshNodeCreation
-    const setTextures = this.controller.config.callBacks.setTextures()
-    const { buffers, views } = bufferInit(shardedData.geometryData,geometryClass)
-    const threadController = threadingInit(geometryClass,workersSRC)
+  createQuadTree({ levels }) {
+    const { size, resolution, dimension } = this.parameters;
+    Object.assign(this.controller.config, {
+      maxLevelSize: size,
+      minLevelSize: size / Math.pow(2, levels - 1),
+      minPolyCount: resolution,
+      dimensions:   dimension,
+    });
 
+    this.controller.levels(levels);
+    this.controller.createArrayBuffers();
+    this.quadTree = new QuadTree();
+  }
+
+  createPlane({ quadTreeNode, meshNode, parent }) {
+    const { geometryClass, additionalPayload } = geometrySelector(this);
+    const {
+      size,
+      matrixRotationData,
+      offset,
+      direction,
+      segments: resolution,
+    } = quadTreeNode.params;
+    const { material, callBacks } = this.controller.config;
+    const { buffers, views }      = bufferInit(this.controller.config.arrybuffers[size].geometryData, geometryClass);
+
+    const threadController  = threadingInit(geometryClass, workersSRC);
     threadController.setPayload({
       direction,
       matrixRotationData,
@@ -65,97 +58,58 @@ export class Primitive  extends THREE.Object3D{
       size,
       resolution,
       ...buffers,
-      ...additionalPayload, 
-      ...setTextures,
+      ...additionalPayload,
+      ...callBacks.setTextures(),
     });
 
-    const promise = new Promise((resolve) => {
-      
+    return new Promise((resolve) => {
       threadController.getPayload((payload) => {
+        const geometry = geometryInit({ size, resolution, additionalPayload, geometryClass, views });
+        createCanvasTexture(callBacks.setTextures(), material, payload.data.imageBitmapResult);
 
-        const geometry = geometryInit({ size,  resolution, additionalPayload, geometryClass, views:views })
+        const mesh = meshInit(geometry, material, payload.data.centerdPosition);
+        parent.add(meshNode.add(mesh));
 
-        createCanvasTexture(setTextures,material,payload.data.imageBitmapResult)
-
-        parent.add(meshNode.add(meshInit(geometry,material,payload.data.centerdPosition)));
-
-        afterMeshNodeCreation(meshNode);
-        
+        callBacks.afterMeshNodeCreation(meshNode);
         resolve(meshNode);
-
       });
-
     });
-
-    promise.uuid = meshNode.uuid;
-    
-    return promise;
-   
   }
 
-  createQuadtreeNode({ matrixRotationData, offset, index, direction, initializationData = this.parameters }){
+  createQuadtreeNode({ matrixRotationData, offset, index, direction, initializationData = this.parameters }) {
+    const { depth, size, resolution: segments } = initializationData;
+    const quadTreeNode = new QuadTreeNode(
+      { index, offset, direction, depth, matrixRotationData, size, segments, controller: this.controller },
+      isSphere(this)
+    );
 
-    const depth      = initializationData.depth
-    const size       = initializationData.size
-    const segments   = initializationData.resolution
-    const controller = this.controller
-
-    const quadTreeNode = new QuadTreeNode({   
-      index,  
-      offset,  
-      direction,
-      depth,
-      matrixRotationData,
-      size,
-      segments,
-      controller
-     }, isSphere(this)) 
-
-    quadTreeNode.setBounds(this.add(quadTreeNode))
-    
-    this.controller.config.callBacks.afterQuadTreeNodeCreation(quadTreeNode)
-
-    return quadTreeNode
-
+    quadTreeNode.setBounds(this.add(quadTreeNode));
+    this.controller.config.callBacks.afterQuadTreeNodeCreation(quadTreeNode);
+    return quadTreeNode;
   }
-  
 
-  createMeshNodes(){
-
-    this._createMeshNodes =({  quadTreeNode, parent = this })=>{
-
-      let meshNode = new MeshNode( quadTreeNode.params, 'active' )
-  
-      meshNode = this.createPlane({
-        quadTreeNode,
-        meshNode,
-        parent
-      })
-  
-      this.addNode(generateKey(quadTreeNode),meshNode)
-  
-      return meshNode
-    }
+  createMeshNodes() {
+    this._createMeshNodes = ({ quadTreeNode, parent = this }) => {
+      const meshNode = new MeshNode(quadTreeNode.params, 'active');
+      const createdNode = this.createPlane({ quadTreeNode, meshNode, parent });
+      this.addNode(quadTreeNode.meshNodeKey, createdNode);
+      return createdNode;
+    };
   }
-  
-  _createMeshNodes(){}
 
-  createDimensions(){
-    const w = this.parameters.size
-    const d = this.parameters.dimension
-    const k = ((w/2)*d)
-    const creation = (this.type === 'Quad') ? createDimension : createDimensions
- 
-    for (var i = 0; i < d; i++) {
-      var i_ = ((i*(w-1))+i)+((-(w/2))*(d-1))
-      for (var j = 0; j < d; j++) {
-        var j_ = ((j*(w-1))+j)+((-(w/2))*(d-1))
-        let _index = String(i * d + j);
-        creation({ i_, j_, k, _index, primitive:this })
+  createDimensions() {
+    const { size: w, dimension: d } = this.parameters;
+    const k = (w / 2) * d;
+    const creation = this.type === 'Quad' ? createDimension : createDimensions;
+
+    for (let i = 0; i < d; i++) {
+      const i_ = i * (w - 1) + i - (w / 2) * (d - 1);
+      for (let j = 0; j < d; j++) {
+        const j_ = j * (w - 1) + j - (w / 2) * (d - 1);
+        creation({ i_, j_, k, _index: String(i * d + j), primitive: this });
       }
     }
   }
-
 }
 
 export class Quad extends Primitive{

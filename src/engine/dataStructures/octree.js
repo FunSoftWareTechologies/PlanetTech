@@ -1,18 +1,46 @@
-import {Octree} from '@interstellar-js-core/octree'
+import { OctreeNode } from './nodes.js'
+import * as THREE from 'three/tsl'
 
-export class QuadOctree extends Octree{
-    constructor(worldObjects, minNodeSize, register){
-        super(worldObjects, minNodeSize, register)
-    }
+
+export class Octree extends THREE.Object3D{
+  constructor() {
+    super()
+  }
+
+
+  init(worldObjects, minNodeSize) {
+    const bounds = new THREE.Box3();
+    worldObjects.forEach((obj) => bounds.union(obj.boundingBox));
+
+    const boundsSize = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const maxSize = Math.max(...boundsSize.toArray());
+    const sizeVec = new THREE.Vector3(maxSize, maxSize, maxSize).multiplyScalar(0.5);
+    bounds.set(center.clone().sub(sizeVec), center.clone().add(sizeVec));
+
+    this.rootNode = new OctreeNode(bounds, minNodeSize);
+    this.addObjects(worldObjects);
 }
 
-export function findNeighbors( currentObj, objs ){
-    currentObj.plane.octreeCells.forEach(( cell )=>{ 
-      cell.objID.forEach((id)=>{
-        if(currentObj.plane != objs[id].plane) 
-          if((currentObj.plane.geometry.boundingBox.intersectsBox(objs[id].plane.geometry.boundingBox) )){  
-            currentObj.neighbors.add(objs[id].plane.uuid)  
+  addObjects(worldObjects) {
+      worldObjects.forEach((obj) => {
+          obj.octreeCells = [];
+          this.rootNode.addObject(obj);
+      });
+  }
+
+  draw() {
+      this.rootNode.draw(this);
+  }
+}
+
+export function findNeighbors(currentObj, objs) {
+  currentObj.octreeCells.forEach((cell) => {
+      cell.objID.forEach((id) => {
+          const neighbor = objs[id];
+          if (currentObj !== neighbor && currentObj.boundingBox.intersectsBox(neighbor.boundingBox)) {
+              currentObj.neighbors.add(neighbor.uuid);
           }
-        })
-      })
-   }
+      });
+  });
+}
