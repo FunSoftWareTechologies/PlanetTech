@@ -24,10 +24,6 @@ export class Controller {
     this.config = Object.assign( shardedData, config )
   }
 
-
-  //let maxVertexCount   = ((resolution + 1) * (resolution + 1)) * (dimension * dimension) * 6
-  //let maxIndexCount    = (resolution * resolution * 6) * (dimension * dimension) * 6
-  //let maxInstanceCount = (dimension  * dimension) * 6
   levels(numOflvls) {
     var levelsArray      = [];
     var polyPerLevel     = [];

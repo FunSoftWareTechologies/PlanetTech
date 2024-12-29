@@ -7,6 +7,31 @@ import { createCanvasTexture,bufferInit,threadingInit,geometryInit,meshInit,crea
  
 export const isSphere = (obj) => obj instanceof Sphere;
 
+export const generateBatchedMesh = (primitive) => {
+
+  const length = primitive.controller.config.levels.numOflvls
+  const BatchedMeshes = [];
+  let maxVertexCountArray   = primitive.controller.config.levels.maxLevelVertexCount
+  let maxIndexCountArray    = primitive.controller.config.levels.maxLevelIndexCount
+  let maxInstanceCountArray = primitive.controller.config.levels.maxLevelInstanceCount
+
+  for (let i = 0; i < length; i++) {
+    
+    let B = new THREE.BatchedMesh(
+      maxInstanceCountArray[i],
+      maxVertexCountArray[i],
+      maxIndexCountArray[i], 
+      new THREE.MeshStandardMaterial())
+
+    BatchedMeshes.push(B)
+
+  }
+
+  return BatchedMeshes
+
+}
+
+
 export class Primitive extends THREE.Object3D {
   constructor({ size, resolution, dimension }) {
     super();
@@ -149,29 +174,71 @@ export class Sphere extends Cube{
 }
 
 
- 
+export class BatchedPrimitive extends THREE.Object3D{
+
+  constructor(primitive){
+    super()
+    this.primitive    = primitive
+    let batchedMeshes = generateBatchedMesh(primitive)
+    this.add(...batchedMeshes) //todo make ading a child private
+    this._transferGeometry(primitive)
+
+    primitive.createDimensions()
+
+    let promises = []
+
+    this.primitive.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
+
+    return Promise.all(promises).then(meshNode =>  this)
+  }
+
+  _transferGeometry(primitive){
+    
+     primitive.controller.config.callBacks.afterMeshNodeCreation = node => {
+
+        const parent = node.parent;
+
+        parent.remove( node );
+
+        const geometry = node.mesh().geometry 
+
+        const depth = node.params.depth  
+
+        const batchedMesh = this.children[depth]
+
+        const geometryId = batchedMesh.addGeometry( geometry );
+        
+        const id = batchedMesh.addInstance( geometryId );
+
+        const matrix = new THREE.Matrix4();
+
+        matrix.premultiply(new THREE.Matrix4().makeTranslation(...node.mesh().position.toArray()));
+
+        batchedMesh.setMatrixAt( id, matrix );
+
+        batchedMesh.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) ) 
+
+    } 
+
+  }
+
+}
+
+
+
+
+
+
+ /*
 export class BatchedPrimitive extends THREE.BatchedMesh{
 
   constructor( primitive ){
 
     let material = new THREE.MeshStandardMaterial()
+console.log(initBatchedMeshData(primitive))
+    super(...initBatchedMeshData(primitive),material)
 
-    function initBatchedMeshData() {
-
-      const length = primitive.controller.config.levels.numOflvls
-      const result = [];
-      let maxVertexCount   = primitive.controller.config.levels.maxLevelVertexCount
-      let maxIndexCount    = primitive.controller.config.levels.maxLevelIndexCount
-      let maxInstanceCount = primitive.controller.config.levels.maxLevelInstanceCount
-     
-      for (let i = 0; i < length; i++) {
-        result.push(maxIndexCount[i] + maxVertexCount[i] + maxInstanceCount[i]);
-      }
-    
-      return result;
-    }
-
-    super(...initBatchedMeshData(),material)
+    this.primitive = primitive
 
     return this.#_transferGeometry(primitive)
 
@@ -179,40 +246,41 @@ export class BatchedPrimitive extends THREE.BatchedMesh{
 
   #_transferGeometry(primitive){
 
-    this.primitive = primitive
+    //let userCallBacks = primitive.controller.config.callBacks.afterMeshNodeCreation
+
+    primitive.controller.config.callBacks.afterMeshNodeCreation = node => {
+
+      const parent = node.parent;
+
+      parent.remove( node );
+
+      let geometry = node.mesh().geometry 
+
+      const geometryId = this.addGeometry( geometry );
+      
+      const id = this.addInstance( geometryId );
+
+      const matrix = new THREE.Matrix4();
+
+      matrix.premultiply(new THREE.Matrix4().makeTranslation(...node.mesh().position.toArray()));
+
+      this.setMatrixAt( id, matrix );
+
+      this.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) );
+
+    }
+
+    primitive.createDimensions()
 
     let promises = []
 
     this.primitive.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
 
-    return Promise.all(promises).then(p=>{
+    return Promise.all(promises).then(meshNode =>  this)
 
-      p.forEach(node=>{
-
-        const parent = node.parent;
-
-        parent.remove( node );
-  
-        let geometry = node.mesh().geometry 
-  
-        const geometryId = this.addGeometry( geometry );
-        
-        const id = this.addInstance( geometryId );
-
-        const matrix = new THREE.Matrix4();
-
-        matrix.premultiply(new THREE.Matrix4().makeTranslation(...node.mesh().position.toArray()));
-
-        this.setMatrixAt( id, matrix );
-
-        this.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) );
-
-      })
-
-      return this
-
-    })
 
   }
 
-}  
+}  */
+
+
