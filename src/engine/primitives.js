@@ -27,6 +27,11 @@ export class Primitive extends THREE.Object3D {
 
   createQuadTree({ levels }) {
     const { size, resolution, dimension } = this.parameters;
+
+    /*let maxVertexCount   = ((resolution + 1) * (resolution + 1)) * (dimension * dimension) * 6
+    let maxIndexCount    = (resolution * resolution * 6) * (dimension * dimension) * 6
+    let maxInstanceCount = (dimension  * dimension) * 6*/
+
     Object.assign(this.controller.config, {
       maxLevelSize: size,
       minLevelSize: size / Math.pow(2, levels - 1),
@@ -143,12 +148,30 @@ export class Sphere extends Cube{
   }
 }
 
+
  
 export class BatchedPrimitive extends THREE.BatchedMesh{
 
-  constructor( params = { maxInstanceCount,  maxVertexCount,  maxIndexCount,  material }, primitive ){
+  constructor( primitive ){
+
+    let material = new THREE.MeshStandardMaterial()
+
+    function initBatchedMeshData() {
+
+      const length = primitive.controller.config.levels.numOflvls
+      const result = [];
+      let maxVertexCount   = primitive.controller.config.levels.maxLevelVertexCount
+      let maxIndexCount    = primitive.controller.config.levels.maxLevelIndexCount
+      let maxInstanceCount = primitive.controller.config.levels.maxLevelInstanceCount
+     
+      for (let i = 0; i < length; i++) {
+        result.push(maxIndexCount[i] + maxVertexCount[i] + maxInstanceCount[i]);
+      }
     
-    super(...Object.values(params))
+      return result;
+    }
+
+    super(...initBatchedMeshData(),material)
 
     return this.#_transferGeometry(primitive)
 

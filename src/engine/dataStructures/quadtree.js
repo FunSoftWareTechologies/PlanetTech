@@ -24,19 +24,43 @@ export class Controller {
     this.config = Object.assign( shardedData, config )
   }
 
+
+  //let maxVertexCount   = ((resolution + 1) * (resolution + 1)) * (dimension * dimension) * 6
+  //let maxIndexCount    = (resolution * resolution * 6) * (dimension * dimension) * 6
+  //let maxInstanceCount = (dimension  * dimension) * 6
   levels(numOflvls) {
-    var levelsArray  = [];
-    var polyPerLevel = [];
+    var levelsArray      = [];
+    var polyPerLevel     = [];
+    let maxLevelVertexCount   = []
+    let maxLevelIndexCount    = []
+    var maxLevelInstanceCount = [];
     var value        = this.config.maxLevelSize
     var min          = this.config.minLevelSize
     var minPoly      = this.config.minPolyCount
+    var dimensions   = (this.config.dimensions ** 2)
+     
     for (let i = 0; i < numOflvls; i++) {
-        levelsArray .push( value   )
-        polyPerLevel.push( minPoly )
+        levelsArray           .push( value   )
+        polyPerLevel          .push( minPoly )
+        maxLevelInstanceCount .push( dimensions * 6)
+        maxLevelVertexCount   .push(((minPoly+1)*(minPoly+1))*dimensions* 6)
+        maxLevelIndexCount    .push(((minPoly**2)*6)*(dimensions * 6))
+
         value   = ( value / 2   )
         minPoly = ( minPoly * 2 )
+        dimensions = dimensions * 4
     }
-    this.config['levels'] = {numOflvls,levelsArray,polyPerLevel}
+
+    this.config['levels'] = {
+      numOflvls,
+      levelsArray,
+      polyPerLevel,
+      maxLevelIndexCount,
+      maxLevelVertexCount,
+      maxLevelInstanceCount,
+
+    }
+
     this.config['maxPolyCount'] = polyPerLevel[polyPerLevel.length - 1]
   }
 
