@@ -11,125 +11,118 @@ class Node extends THREE.Object3D{
 
 }
 
-export class MeshNode extends Node{ 
-
-    constructor(params,state = 'active'){ 
-        super(params)
-        this.state = state 
-     }
-    
-    add(mesh){
-        super.add(mesh)
-        this.showMesh()
-        return this
-    }
-
-    mesh(){
-        if (this.children[0] instanceof THREE.Mesh) // todo
-        return this.children[0]
-    }
-
-    showMesh() {
-        if (this.state !== 'active') {
-            this.mesh().material.visible  = true;
-            this.state = 'active';
-        }
-      }
-
-    hideMesh() {
-        if (this.state == 'active') {
-            this.mesh().material.visible = false;
-            this.state = 'inactive';
-        }
-    }
-
-}
-
 
 export class QuadTreeNode extends Node{
 
     constructor(params, normalize){ 
 
-        super(params) 
+        super(params)
+        
+        this.boundingInfo = {
+            boundingBox : new THREE.Box3(),
+            boundingPoints : [],
+            boundingHalfPoints : []
+        }
 
-        this.boundingBox = new THREE.Box3();
-
-        this.boundingBox._boundingPoints = []
-
-        this.neighbors = new Set()
+        this.neighbors   = new Set()
 
         this.meshNodeKey = undefined
 
-        this.normalize = normalize
+        this.normalize   = normalize
 
-        let matrixRotationData = this.params.matrixRotationData
+        this.initializeTransform() 
+    }
 
-        let offset = this.params.offset
 
-        let matrix = matrixRotationData.propMehtod ? new THREE.Matrix4()[[matrixRotationData.propMehtod]](matrixRotationData.input) : new THREE.Matrix4() 
+    addMeshNode(meshNode){
+        this.meshNode  = meshNode
+    }
 
-        matrix.premultiply(new THREE.Matrix4().makeTranslation(...offset)) 
-        
-        this.position.applyMatrix4(matrix)
+
+    initializeTransform() {
+        const { matrixRotationData, offset } = this.params;
+        const matrix = this.createTransformationMatrix(matrixRotationData, offset);
+        this.position.applyMatrix4(matrix);
+    }
+
+
+    createTransformationMatrix(matrixRotationData, offset) {
+        const matrix = new THREE.Matrix4();
+        if (matrixRotationData?.propMethod) {
+            matrix[matrixRotationData.propMethod](matrixRotationData.input);
+        }
+        matrix.premultiply(new THREE.Matrix4().makeTranslation(...offset));
+        return matrix;
     }
 
     setBounds(primitive){
 
         let size = this.params.size
+
+        let M = new THREE.Vector3() 
+
+        const axis = this.params.direction.includes('z') ? 'z' : this.params.direction.includes('x') ? 'x' : 'y';
+
+        const {points,averages} = createLocations(size, this.params.offset, axis)
         
         if(this.normalize){
-
-            let M = new THREE.Vector3() 
             
             let radius =  this.params.controller.config.radius
-
-            const axis = this.params.direction.includes('z') ? 'z' : this.params.direction.includes('x') ? 'x' : 'y';
-
-            createLocations(size, this.params.offset, axis).forEach(e=>{
+            
+            points.forEach((e,i)=>{
 
                 const A = this.localToWorld( new THREE.Vector3(...e) )
 
                 project(A,radius,new THREE.Vector3().copy(primitive.position))
 
-                this. boundingBox.expandByPoint(A)
+                this.boundingInfo.boundingBox.expandByPoint(A)
 
-                this.boundingBox._boundingPoints.push(A.clone())
+                this.boundingInfo.boundingPoints.push(A.clone())
 
                 M.add(A)
+
+                const B = this.localToWorld( new THREE.Vector3(...averages[i]) )
+
+                project(B,radius,new THREE.Vector3().copy(primitive.position))
+
+                this.boundingInfo.boundingHalfPoints.push(B.clone())
+
             })
 
             M.divideScalar(4) 
             
             project( M,radius,new THREE.Vector3().copy(primitive.position)) 
 
-            this. boundingBox.expandByPoint(M)
+            this.boundingInfo.boundingBox.expandByPoint(M)
 
-            this.boundingBox._boundingPoints.push(M.clone())
+            this.boundingInfo.boundingPoints.push(M.clone())
 
             this.position.copy(M)
 
         }else{
 
-            let M = new THREE.Vector3() 
-            
-            const axis = this.params.direction.includes('z') ? 'z' : this.params.direction.includes('x') ? 'x' : 'y';
 
-            createLocations(size, this.params.offset, axis).forEach(e=>{
+            points.forEach((e,i)=>{
 
                 const A = this.localToWorld( new THREE.Vector3(...e)).add(primitive.position) 
 
-                this.boundingBox.expandByPoint(A.divideScalar(2))
+                this.boundingInfo.boundingBox.expandByPoint(A.divideScalar(2))
 
-                this.boundingBox._boundingPoints.push(A.clone())
+                this.boundingInfo.boundingPoints.push(A.clone())
 
                 M.add(A)
+
+                const B = this.localToWorld( new THREE.Vector3(...averages[i]) ).add(primitive.position).divideScalar(2)
+
+                this.boundingInfo.boundingHalfPoints.push(B.clone())
+
             })
 
             M.divideScalar(4) 
 
-            this.boundingBox.expandByPoint(M)
+            this.boundingInfo.boundingBox.expandByPoint(M)
 
-            this.boundingBox._boundingPoints.push(M.clone())
+            this.boundingInfo.boundingPoints.push(M.clone())
 
             this.position.copy(M)
 
@@ -151,9 +144,9 @@ export class QuadTreeNode extends Node{
          
         size = (size/2)
 
-        let locations = createLocations((size/2), offset, axis) 
+        let {points,averages }= createLocations((size/2), offset, axis) 
 
-        locations.forEach((location,idx) => {
+        points.forEach((location,idx) => {
 
             index = `${index} -> ${cordinate(idx)}`
 
@@ -166,27 +159,18 @@ export class QuadTreeNode extends Node{
     }
 
 
-    visibleNodes(OBJECT3D,primitive){
-
-        const nodes = [] 
-    
-        const traverse = ( node ) => {
-            
-            var distance = node.position.distanceTo(OBJECT3D.position)
-
-            if( isWithinBounds( distance, primitive, node.params.size ) ){
-
-                for (const child of node._children) { traverse(child)  }
-
-            }else{  
-                
-                nodes.push(node)  
+    visibleNodes(OBJECT3D, primitive) {
+        const nodes = [];
+        const traverse = (node) => {
+            const distance = node.position.distanceTo(OBJECT3D.position);
+            if (isWithinBounds(distance, primitive, node.params.size)) {
+                node._children.forEach(traverse);
+            } else {
+                nodes.push(node);
             }
-        }
-    
-        traverse(this)
-
-        return nodes
+        };
+        traverse(this);
+        return nodes;
     }
 
 }
@@ -264,3 +248,39 @@ export class OctreeNode extends Node{
       });
   }
 }
+
+
+export class MeshNode extends Node{ 
+
+    constructor(params,state = 'active'){ 
+        super(params)
+        this.state = state 
+     }
+    
+    add(mesh){
+        if (this.state !== 'active')  mesh.material.visible = false;
+        super.add(mesh)
+        return this
+    }
+
+    mesh(){
+        if (this.children[0] instanceof THREE.Mesh) // todo
+        return this.children[0]
+    }
+
+    showMesh() {
+        if (this.state !== 'active') {
+            this.mesh().material.visible  = true;
+            this.state = 'active';
+        }
+      }
+
+    hideMesh() {
+        if (this.state == 'active') {
+            this.mesh().material.visible = false;
+            this.state = 'inactive';
+        }
+    }
+
+}
+

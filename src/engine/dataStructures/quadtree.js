@@ -1,5 +1,5 @@
 import * as THREE  from 'three/tsl';
-import { generateKey,isWithinBounds } from '../utils.js'
+import { isWithinBounds } from '../utils.js'
  
 export class Controller {
 
@@ -64,9 +64,6 @@ export class Controller {
   setCallBacks(callBacks){
     this.config.callBacks = Object.assign(this.config.callBacks,callBacks) 
   }
-
- 
-
 }
 
 
@@ -76,8 +73,8 @@ export class QuadTree {
 
   constructor() {
 
-    this.rootNodes = [];
-    
+    this.rootNodes = []
+
   }
   
   insert(OBJECT3D,primitive,quadtreeNode){
@@ -86,31 +83,36 @@ export class QuadTree {
   
     if ( isWithinBounds(distance,primitive, quadtreeNode.params.size) ) {
   
-        if (quadtreeNode._children.length === 0) { quadtreeNode.subdivide(primitive) }
+        if (quadtreeNode._children.length === 0)  quadtreeNode.subdivide(primitive) 
  
         for (const child of quadtreeNode._children) { this.insert(OBJECT3D,primitive,child) } 
     }
 
 }
 
-  async update(OBJECT3D, primitive) {
-    const visibleMeshNodes = new Set();
-       await Promise.all(
-        this.rootNodes.map((quadtreeNode) =>
-          this.#_update(OBJECT3D, primitive, quadtreeNode, visibleMeshNodes)
-        )
-      );
+  update(OBJECT3D, primitive) {
+      
+    const visibleQuadTreeNodes = new Set();
 
-      for (const [key, value] of primitive.meshNodes.entries()) {
-        if (!visibleMeshNodes.has(key)) {
-          const meshNode = await value;
-          meshNode.hideMesh();
-        }
-      }
+    this.rootNodes.forEach((quadtreeNode) => this.#_update(OBJECT3D, primitive, quadtreeNode, visibleQuadTreeNodes))
+    
+    for (const [key, value] of primitive.quadTreeCollections.entries()) {
+
+      if (!visibleQuadTreeNodes.has(key)) {
+        
+        Promise.all(value._children.map(v=> v.meshNode)).then(v=>{
+          
+          v.forEach(r=> r.showMesh() )
+
+          value.meshNode.then(j=> j.hideMesh())
+
+        })
+      } 
     }
+  }
 
 
-  async #_update(OBJECT3D, primitive, quadtreeNode, visibleMeshNodes ) {
+ #_update(OBJECT3D, primitive, quadtreeNode, visibleQuadTreeNodes) {
     
     this.insert(OBJECT3D, primitive,quadtreeNode);
 
@@ -118,21 +120,32 @@ export class QuadTree {
   
     for (const node of visibleNodes) {
 
-      const key = generateKey(node);
+      const key = node.meshNodeKey;
   
-      if (primitive.meshNodes.has(key)) {
+      if (!primitive.quadTreeCollections.has(key)) {
 
-        const meshNode =  await primitive.meshNodes.get(key)
-  
-        meshNode.showMesh();
+        primitive._createMeshNodes({quadTreeNode:node,initialState:'inactive'})
 
-        visibleMeshNodes.add(key);
+        visibleQuadTreeNodes.add(key);
 
       } else {
-   
-        primitive._createMeshNodes({quadTreeNode:node})
+
+        visibleQuadTreeNodes.add(key);
+
+        //todo
+        if (quadtreeNode.meshNodeKey === key) {
   
-        visibleMeshNodes.add(key);
+          let value = primitive.quadTreeCollections.get(key)
+  
+          Promise.all(value._children.map(v=> v.meshNode)).then(v=>{
+  
+            v.forEach(r=> r.hideMesh())
+  
+            value.meshNode.then(j=> j.showMesh())
+  
+          }) 
+        }
+        
       }
     }
   }

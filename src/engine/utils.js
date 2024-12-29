@@ -10,34 +10,58 @@ export const project=( normalizedCenter, radius, center )=>{
     normalizedCenter.add(center).add(W)
 }
 
-export const createLocations = ( size, offset, axis ) => {
-    const halfSize = size 
-    switch (axis) {
-     case 'z':
-       return [
-         [ halfSize + offset[0],  halfSize + offset[1], offset[2]],
-         [-halfSize + offset[0],  halfSize + offset[1], offset[2]],
-         [ halfSize + offset[0], -halfSize + offset[1], offset[2]],
-         [-halfSize + offset[0], -halfSize + offset[1], offset[2]],
-       ];
-     case 'x':
-       return [
-         [offset[0],  halfSize + offset[1],  halfSize + offset[2]],
-         [offset[0],  halfSize + offset[1], -halfSize + offset[2]],
-         [offset[0], -halfSize + offset[1],  halfSize + offset[2]],
-         [offset[0], -halfSize + offset[1], -halfSize + offset[2]],
-       ];
-     case 'y':
-       return [
-         [ halfSize + offset[0], offset[1],  halfSize + offset[2]],
-         [-halfSize + offset[0], offset[1],  halfSize + offset[2]],
-         [ halfSize + offset[0], offset[1], -halfSize + offset[2]],
-         [-halfSize + offset[0], offset[1], -halfSize + offset[2]],
-       ];
-     default:
-       return [];
-   }
- };
+export const createLocations = (size, offset, axis) => {
+  const halfSize = size;
+  let points;
+
+  switch (axis) {
+    case 'z':
+      points = [
+        [ halfSize + offset[0],  halfSize + offset[1], offset[2]], // A
+        [-halfSize + offset[0],  halfSize + offset[1], offset[2]], // B
+        [ halfSize + offset[0], -halfSize + offset[1], offset[2]], // C
+        [-halfSize + offset[0], -halfSize + offset[1], offset[2]], // D
+      ];
+      break;
+
+    case 'x':
+      points = [
+        [offset[0],  halfSize + offset[1],  halfSize + offset[2]], // A
+        [offset[0],  halfSize + offset[1], -halfSize + offset[2]], // B
+        [offset[0], -halfSize + offset[1],  halfSize + offset[2]], // C
+        [offset[0], -halfSize + offset[1], -halfSize + offset[2]], // D
+      ];
+      break;
+
+    case 'y':
+      points = [
+        [ halfSize + offset[0], offset[1],  halfSize + offset[2]], // A
+        [-halfSize + offset[0], offset[1],  halfSize + offset[2]], // B
+        [ halfSize + offset[0], offset[1], -halfSize + offset[2]], // C
+        [-halfSize + offset[0], offset[1], -halfSize + offset[2]], // D
+      ];
+      break;
+
+    default:
+      return [];
+  }
+
+  const [A, B, C, D] = points;
+
+  // Compute the averages
+  const averages = [
+    [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2, (A[2] + B[2]) / 2], // A and B
+    [(A[0] + C[0]) / 2, (A[1] + C[1]) / 2, (A[2] + C[2]) / 2], // A and C
+    [(C[0] + D[0]) / 2, (C[1] + D[1]) / 2, (C[2] + D[2]) / 2], // C and D
+    [(D[0] + B[0]) / 2, (D[1] + B[1]) / 2, (D[2] + B[2]) / 2], // D and B
+  ];
+
+  return {
+    points,
+    averages,
+  };
+};
+
  
  export const cordinate = (idx) => ['NE','NW','SE','SW'][idx]
 

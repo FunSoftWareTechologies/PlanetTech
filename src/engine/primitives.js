@@ -11,17 +11,18 @@ export class Primitive extends THREE.Object3D {
   constructor({ size, resolution, dimension }) {
     super();
     this.parameters = { size, resolution, dimension, depth: 0 };
-    this.meshNodes  = new Map();
+    this.quadTreeCollections  = new Map();
     this.controller = new Controller();
     this._createMeshNodes = () => {}; // NooOp Placeholder to avoid undefined errors
+   }
+
+
+  addNode(bounds, node) {
+    this.quadTreeCollections.set(bounds, node);
   }
 
   update(object3D) {
     this.quadTree.update(object3D, this);
-  }
-
-  addNode(bounds, node) {
-    this.meshNodes.set(bounds, node);
   }
 
   createQuadTree({ levels }) {
@@ -64,6 +65,7 @@ export class Primitive extends THREE.Object3D {
 
     return new Promise((resolve) => {
       threadController.getPayload((payload) => {
+
         const geometry = geometryInit({ size, resolution, additionalPayload, geometryClass, views });
         createCanvasTexture(callBacks.setTextures(), material, payload.data.imageBitmapResult);
 
@@ -89,11 +91,12 @@ export class Primitive extends THREE.Object3D {
   }
 
   createMeshNodes() {
-    this._createMeshNodes = ({ quadTreeNode, parent = this }) => {
-      const meshNode = new MeshNode(quadTreeNode.params, 'active');
-      const createdNode = this.createPlane({ quadTreeNode, meshNode, parent });
-      this.addNode(quadTreeNode.meshNodeKey, createdNode);
-      return createdNode;
+    this._createMeshNodes = ({ quadTreeNode, initialState = 'active', parent = this }) => {
+      let meshNode = new MeshNode(quadTreeNode.params, initialState) 
+      meshNode = this.createPlane({ quadTreeNode, meshNode, parent }) 
+      quadTreeNode.addMeshNode(meshNode)
+      this.addNode(quadTreeNode.meshNodeKey,quadTreeNode)
+      return quadTreeNode.meshNode;
     };
   }
 
@@ -111,6 +114,12 @@ export class Primitive extends THREE.Object3D {
     }
   }
 }
+
+
+
+
+
+
 
 export class Quad extends Primitive{
   constructor(params){
@@ -134,33 +143,53 @@ export class Sphere extends Cube{
   }
 }
 
-/*
-export class BatchedPrimative extends THREE.BatchedMesh{
+ 
+export class BatchedPrimitive extends THREE.BatchedMesh{
 
-  constructor( primative ){
-    super( 7, 20000, 200000, new THREE.MeshStandardNodeMaterial({color:'red'})  )
-    this.primative = primative
+  constructor( params = { maxInstanceCount,  maxVertexCount,  maxIndexCount,  material }, primitive ){
+    
+    super(...Object.values(params))
+
+    return this.#_transferGeometry(primitive)
+
     }
 
-  createInstances( callBack = defualtCallBack  ){
-    
-    this.primative.createDimensions((node)=>{
+  #_transferGeometry(primitive){
 
-      const parent = node.parent;
+    this.primitive = primitive
 
-      parent.remove( node );
+    let promises = []
 
-      let geometry = node.plane().geometry 
+    this.primitive.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
 
-      const boxGeometryId = this.addGeometry( geometry );
-      
-      const id = this.addInstance( boxGeometryId );
+    return Promise.all(promises).then(p=>{
 
-      callBack(node)
+      p.forEach(node=>{
 
-      //node.matrixWorld.decompose( node.position, node.quaternion, node.scale );
+        const parent = node.parent;
 
-    } )
+        parent.remove( node );
+  
+        let geometry = node.mesh().geometry 
+  
+        const geometryId = this.addGeometry( geometry );
+        
+        const id = this.addInstance( geometryId );
+
+        const matrix = new THREE.Matrix4();
+
+        matrix.premultiply(new THREE.Matrix4().makeTranslation(...node.mesh().position.toArray()));
+
+        this.setMatrixAt( id, matrix );
+
+        this.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) );
+
+      })
+
+      return this
+
+    })
 
   }
-}*/
+
+}  
