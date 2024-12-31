@@ -1,6 +1,12 @@
-import * as THREE  from 'three/tsl';
+ 
 import { isWithinBounds } from '../utils.js'
  
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
+
+const THREE = {..._THREE,...TSL,...WG}
+
 export class Controller {
 
   constructor(config = {}) {
@@ -39,7 +45,7 @@ export class Controller {
         levelsArray           .push( value   )
         polyPerLevel          .push( minPoly )
         maxLevelInstanceCount .push( dimensions * 6)
-        maxLevelVertexCount   .push(((minPoly+1)*(minPoly+1))*dimensions* 6)
+        maxLevelVertexCount   .push(((minPoly+1)*(minPoly+1))*(dimensions* 6))
         maxLevelIndexCount    .push(((minPoly**2)*6)*(dimensions * 6))
 
         value   = ( value / 2   )
@@ -101,7 +107,7 @@ export class QuadTree {
 
     let distance = quadtreeNode.position.distanceTo(OBJECT3D.position)
   
-    if ( isWithinBounds(distance,primitive, quadtreeNode.params.size) ) {
+    if ( isWithinBounds(distance, primitive, quadtreeNode.params.size) ) {
   
         if (quadtreeNode._children.length === 0)  quadtreeNode.subdivide(primitive) 
  

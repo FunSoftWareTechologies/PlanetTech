@@ -1,6 +1,10 @@
-import * as THREE from 'three/tsl'
+ 
 import { vec3, storage,  instanceIndex } from 'three/tsl';
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
 
+const THREE = {..._THREE,...TSL,...WG}
 
 export const setStorageBufferAttribute = ({ mesh, buffers })=>{
 

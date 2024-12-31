@@ -1,45 +1,40 @@
-import * as THREE from 'three/tsl'
+ 
 import { Controller,QuadTree } from './dataStructures/quadtree.js'
 import { geometrySelector } from './geometry.js'
 import { workersSRC } from './webWorker/workerThread.js'
 import { MeshNode,QuadTreeNode } from './dataStructures/nodes.js'
 import { createCanvasTexture,bufferInit,threadingInit,geometryInit,meshInit,createDimensions,createDimension } from './utils.js'
  
-export const isSphere = (obj) => obj instanceof Sphere;
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
 
-export const generateBatchedMesh = (primitive) => {
+const THREE = {..._THREE,...TSL,...WG}
 
-  const length = primitive.controller.config.levels.numOflvls
-  const BatchedMeshes = [];
-  let maxVertexCountArray   = primitive.controller.config.levels.maxLevelVertexCount
-  let maxIndexCountArray    = primitive.controller.config.levels.maxLevelIndexCount
-  let maxInstanceCountArray = primitive.controller.config.levels.maxLevelInstanceCount
+export const isSphere = (obj) => obj.type === 'Sphere';
 
-  for (let i = 0; i < length; i++) {
-    
-    let B = new THREE.BatchedMesh(
-      maxInstanceCountArray[i],
-      maxVertexCountArray[i],
-      maxIndexCountArray[i], 
-      new THREE.MeshStandardMaterial())
-
-    BatchedMeshes.push(B)
-
-  }
-
-  return BatchedMeshes
-
+const setTypeProperty = (primitive,value) =>{
+  Object.defineProperty(primitive, 'type', {
+    value: value,       
+    writable: false,     
+    configurable: false  
+  });
 }
-
-
+ 
 export class Primitive extends THREE.Object3D {
-  constructor({ size, resolution, dimension }) {
-    super();
-    this.parameters = { size, resolution, dimension, depth: 0 };
-    this.quadTreeCollections  = new Map();
+
+  constructor(params) {
+
+    super()
+
+    this.parameters = { ...params, depth: 0 };
+
+    this.quadTreeCollections = new Map();
+
     this.controller = new Controller();
-    this._createMeshNodes = () => {}; // NooOp Placeholder to avoid undefined errors
-   }
+
+    this._createMeshNodes = () => {}
+  }
 
 
   addNode(bounds, node) {
@@ -52,10 +47,6 @@ export class Primitive extends THREE.Object3D {
 
   createQuadTree({ levels }) {
     const { size, resolution, dimension } = this.parameters;
-
-    /*let maxVertexCount   = ((resolution + 1) * (resolution + 1)) * (dimension * dimension) * 6
-    let maxIndexCount    = (resolution * resolution * 6) * (dimension * dimension) * 6
-    let maxInstanceCount = (dimension  * dimension) * 6*/
 
     Object.assign(this.controller.config, {
       maxLevelSize: size,
@@ -146,69 +137,73 @@ export class Primitive extends THREE.Object3D {
 }
 
 
+export class BatchedPrimitive extends Primitive{
 
-
-
-
-
-export class Quad extends Primitive{
-  constructor(params){
+  constructor(type,params){
+    
     super(params)
-    this.type = 'Quad'
+
+    this.type = type
+
+    if(isSphere(this)) this.controller.config.radius = params.radius
+    
   }
-}
 
-export class Cube extends Quad{
-  constructor({ size, resolution, dimension}){
-    super({ size, resolution, dimension }) 
-    this.type = 'Cube'
-  }
-}
+  createDimensions(){
 
-export class Sphere extends Cube{
-  constructor({ size, resolution, dimension, radius }){
-    super({size, resolution, dimension})
-    this.type = 'Sphere'
-    this.controller.config.radius = radius
-  }
-}
+    let batchedMesh = new THREE.BatchedMesh(0,0,0, new THREE.MeshStandardMaterial())
 
+    this._transferGeometry(batchedMesh)
 
-export class BatchedPrimitive extends THREE.Object3D{
-
-  constructor(primitive){
-    super()
-    this.primitive    = primitive
-    let batchedMeshes = generateBatchedMesh(primitive)
-    this.add(...batchedMeshes) //todo make ading a child private
-    this._transferGeometry(primitive)
-
-    primitive.createDimensions()
+    super.createDimensions()
 
     let promises = []
 
-    this.primitive.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
+    this.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
 
-    return Promise.all(promises).then(meshNode =>  this)
+    this.batchedMesh = Promise.all(promises).then( _ => {
+
+      this.add(batchedMesh)
+
+      return batchedMesh
+    
+    })
+
   }
 
-  _transferGeometry(primitive){
-    
-     primitive.controller.config.callBacks.afterMeshNodeCreation = node => {
+  _transferGeometry(batchedMesh){
 
+    let polyPerLevel = this.controller.config.levels.polyPerLevel
+
+     this.controller.config.callBacks.afterMeshNodeCreation = node => {
+ 
         const parent = node.parent;
 
         parent.remove( node );
 
-        const geometry = node.mesh().geometry 
+        const geometry  = node.mesh().geometry 
 
-        const depth = node.params.depth  
+        const depth     = node.params.depth 
 
-        const batchedMesh = this.children[depth]
+        let vertex      = polyPerLevel[depth] 
 
+        let vertexCount = ((vertex+1)*(vertex+1))
+
+        let indexCount  = ((vertex**2)*6)
+
+        let maxInstanceCount  =   batchedMesh.maxInstanceCount + 1
+
+        let maxVertexCount    =   batchedMesh._maxVertexCount + vertexCount // doc shows its without the undscore
+
+        let maxIndexCount     =   batchedMesh._maxIndexCount  + indexCount // doc shows its without the undscore
+
+        batchedMesh.setInstanceCount(maxInstanceCount)
+
+        batchedMesh.setGeometrySize(maxVertexCount,maxIndexCount)
+ 
         const geometryId = batchedMesh.addGeometry( geometry );
         
-        const id = batchedMesh.addInstance( geometryId );
+        const id =  batchedMesh.addInstance( geometryId );
 
         const matrix = new THREE.Matrix4();
 
@@ -216,7 +211,7 @@ export class BatchedPrimitive extends THREE.Object3D{
 
         batchedMesh.setMatrixAt( id, matrix );
 
-        batchedMesh.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) ) 
+        batchedMesh.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) )
 
     } 
 
@@ -225,17 +220,50 @@ export class BatchedPrimitive extends THREE.Object3D{
 }
 
 
+export class Quad extends Primitive{
+  constructor(params){
+    super(params)
+    setTypeProperty(this,'Quad')
+   }
+}
+
+export class Cube extends Quad{
+  constructor(params){
+    super(params) 
+    setTypeProperty(this,'Cube')
+   }
+}
+
+export class Sphere extends Cube{
+  constructor(params){
+    super(params) 
+    setTypeProperty(this,'Sphere')
+    this.controller.config.radius = params.radius
+  }
+}
 
 
+/*
 
+function initBatchedMeshData(primitive) {
 
- /*
+  const length = primitive.controller.config.levels.numOflvls
+  const result = [];
+  let maxVertexCount   = primitive.controller.config.levels.maxLevelVertexCount
+  let maxIndexCount    = primitive.controller.config.levels.maxLevelIndexCount
+  let maxInstanceCount = primitive.controller.config.levels.maxLevelInstanceCount
+ 
+  const sumArray = (arr) => arr.reduce((sum, value) => sum + value, 0);
+  return [sumArray(maxInstanceCount), sumArray(maxVertexCount), sumArray(maxIndexCount)];
+
+}
+ 
 export class BatchedPrimitive extends THREE.BatchedMesh{
 
   constructor( primitive ){
 
     let material = new THREE.MeshStandardMaterial()
-console.log(initBatchedMeshData(primitive))
+ 
     super(...initBatchedMeshData(primitive),material)
 
     this.primitive = primitive
@@ -281,6 +309,6 @@ console.log(initBatchedMeshData(primitive))
 
   }
 
-}  */
+}  
 
-
+*/

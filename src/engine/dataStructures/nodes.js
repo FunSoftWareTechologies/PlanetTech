@@ -1,5 +1,11 @@
-import * as THREE from 'three/tsl'
+  
 import { project, createLocations, isWithinBounds, cordinate,generateKey } from '../utils.js';
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
+
+const THREE = {..._THREE,...TSL,...WG}
+
 
 class Node extends THREE.Object3D{ 
 

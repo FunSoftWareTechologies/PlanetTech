@@ -1,5 +1,9 @@
 import { OctreeNode } from './nodes.js'
-import * as THREE from 'three/tsl'
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
+
+const THREE = {..._THREE,...TSL,...WG}
 
 
 export class Octree extends THREE.Object3D{

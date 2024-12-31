@@ -1,4 +1,8 @@
-import * as THREE   from 'three/tsl';
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
+
+const THREE = {..._THREE,...TSL,...WG}
 
 export function getRandomColor() {
     var letters = '0123456789ABCDEF';

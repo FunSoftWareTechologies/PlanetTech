@@ -1,7 +1,13 @@
-import * as THREE from 'three/tsl'
+ 
 import { NormalizedQuadGeometry,QuadGeometry } from './geometry.js'
 import { ThreadController } from './webWorker/threading.js'
  
+import * as _THREE from 'three'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
+
+const THREE = {..._THREE,...TSL,...WG}
+
 export const project=( normalizedCenter, radius, center )=>{
     let W = new THREE.Vector3()
     normalizedCenter.sub(center).normalize()
