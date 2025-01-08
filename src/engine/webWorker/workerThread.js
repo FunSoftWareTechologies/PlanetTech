@@ -78,9 +78,9 @@ export function workersSRC(currentGeometry,params){
 
         let centerdPosition = new THREE.Vector3()
         
-        geometry._restGeometry(centerdPosition)
+        //geometry._restGeometry(centerdPosition)
 
-        positionBuffer.set(geometry.attributes.position.array)
+        //positionBuffer.set(geometry.attributes.position.array)
 
         geometry.computeVertexNormals()
 

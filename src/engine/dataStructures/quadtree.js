@@ -103,7 +103,9 @@ export class QuadTree {
 
   }
   
-  insert(OBJECT3D,primitive,quadtreeNode){
+  insert(OBJECT3D,primitive,nodeinterface){
+
+    let quadtreeNode = nodeinterface.dataNode()
 
     let distance = quadtreeNode.position.distanceTo(OBJECT3D.position)
   
@@ -111,46 +113,71 @@ export class QuadTree {
   
         if (quadtreeNode._children.length === 0)  quadtreeNode.subdivide(primitive) 
  
-        for (const child of quadtreeNode._children) { this.insert(OBJECT3D,primitive,child) } 
-    }
+        quadtreeNode._children.forEach(child=>this.insert(OBJECT3D,primitive,child))
 
-}
+     }
+  }
+
+  visibleNodes(OBJECT3D, primitive, rootNodeNodeinterface) {
+    
+    const nodes = [];
+
+    const traverse = (nodeinterface) => {
+
+        let node = nodeinterface.dataNode()
+
+        const distance = node.position.distanceTo(OBJECT3D.position);
+
+        if (isWithinBounds(distance, primitive, node.params.size)) {
+
+            node._children.forEach(traverse);
+
+        } else {
+
+            nodes.push(nodeinterface);
+
+        }
+
+    };
+
+    traverse(rootNodeNodeinterface);
+
+    return nodes;
+  }
+
 
   update(OBJECT3D, primitive) {
       
     const visibleQuadTreeNodes = new Set();
 
-    this.rootNodes.forEach((quadtreeNode) => this.#_update(OBJECT3D, primitive, quadtreeNode, visibleQuadTreeNodes))
+    this.rootNodes.forEach((nodeinterface) => this.#_update(OBJECT3D, primitive, nodeinterface, visibleQuadTreeNodes))
     
     for (const [key, value] of primitive.quadTreeCollections.entries()) {
 
       if (!visibleQuadTreeNodes.has(key)) {
         
-        Promise.all(value._children.map(v=> v.meshNode)).then(v=>{
-          
-          v.forEach(r=> r.showMesh() )
+        value.showChildren()
 
-          value.meshNode.then(j=> j.hideMesh())
-
-        })
       } 
-    }
+    } 
   }
 
 
- #_update(OBJECT3D, primitive, quadtreeNode, visibleQuadTreeNodes) {
+ #_update(OBJECT3D, primitive, nodeinterface, visibleQuadTreeNodes) {
     
-    this.insert(OBJECT3D, primitive,quadtreeNode);
+    this.insert(OBJECT3D, primitive, nodeinterface);
 
-    const visibleNodes = quadtreeNode.visibleNodes(OBJECT3D, primitive);
-  
+    const visibleNodes = this.visibleNodes(OBJECT3D, primitive, nodeinterface);
+
     for (const node of visibleNodes) {
 
-      const key = node.meshNodeKey;
+      const key = node.dataNode().nodekey;
   
       if (!primitive.quadTreeCollections.has(key)) {
 
-        primitive._createMeshNodes({quadTreeNode:node,initialState:'inactive'})
+        primitive._createMeshNodes({nodeinterface:node,initialState:'inactive'})
+
+        primitive.addNode(key,node)
 
         visibleQuadTreeNodes.add(key);
 
@@ -159,19 +186,13 @@ export class QuadTree {
         visibleQuadTreeNodes.add(key);
 
         //todo
-        if (quadtreeNode.meshNodeKey === key) {
+        if (nodeinterface.dataNode().nodekey === key) {
   
           let value = primitive.quadTreeCollections.get(key)
   
-          Promise.all(value._children.map(v=> v.meshNode)).then(v=>{
-  
-            v.forEach(r=> r.hideMesh())
-  
-            value.meshNode.then(j=> j.showMesh())
-  
-          }) 
+          value.hideChildren()
+          
         }
-        
       }
     }
   }

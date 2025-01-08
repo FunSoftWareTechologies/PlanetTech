@@ -1,28 +1,138 @@
   
-import { project, createLocations, isWithinBounds, cordinate,generateKey } from '../utils.js';
+import { project, createLocations, cordinate,generateKey } from '../utils.js';
 import * as _THREE from 'three'
 import * as TSL from 'three/tsl'
 import * as WG from 'three/webgpu'
 
 const THREE = {..._THREE,...TSL,...WG}
 
+export class Nodeinterface extends THREE.Object3D{
+    #_visualNode = null
+    #_dataNode   = null
+
+    constructor(sharderParameters){
+        super()
+        this.sharderParameters = sharderParameters
+    }
+
+    add(mesh){
+        if (mesh instanceof MeshNode){ this.#_visualNode = mesh}
+        else if (mesh instanceof QuadTreeNode) {this.#_dataNode = mesh}
+        super.add(mesh)
+        return this
+    }
+
+    dataNode(){
+        return this.#_dataNode   
+    }
+
+    visualNode(){
+        return this.#_visualNode  
+    }
+
+    setDataNode(node){
+        this.#_dataNode  = node
+    }
+
+    setVisualNode(node){
+       this.#_visualNode = node
+    }
+
+    hideChildren(){
+
+        Promise.all(this.dataNode()._children.map(v=> v.visualNode())).then(k=>{
+  
+            k.forEach(r=> r.hideMesh())
+
+            this.dataNode()._children.forEach(r=> r.dataNode().hideMesh())
+  
+            this.visualNode().then(j=> {
+                
+                j.showMesh()
+
+                this.dataNode().showMesh()
+            })
+
+          }) 
+    }
+
+
+    showChildren(){
+
+        Promise.all(this.dataNode()._children.map(v=> v.visualNode())).then(k=>{
+          
+            k.forEach(r=> r.showMesh() )
+  
+            this.dataNode()._children.forEach(r=> r.dataNode().showMesh())
+  
+            this.visualNode().then(j=>{ 
+
+                j.hideMesh()
+
+                this.dataNode().hideMesh()
+            })
+  
+          })
+    }
+
+} 
+
 
 class Node extends THREE.Object3D{ 
 
-    constructor(params){ 
+    constructor(params,state){ 
       super() 
       this.params = params
+      this.state  = state
       this._children = []
+    }
+
+    add(mesh){
+        if (this.state !== 'active')  mesh.material.visible = false;
+        super.add(mesh)
+        return this
+    }
+
+    attach(mesh){
+        if (this.state !== 'active')  mesh.material.visible = false;
+        super.attach(mesh)
+        return this
+    }
+
+    mesh(){
+        return this.children[0] //todo
+    }
+
+    showMesh() {
+        if (this.state !== 'active') {
+            if (this.mesh()) this.mesh().material.visible = true;
+            this.state = 'active';
+        }
+      }
+
+    hideMesh() {
+        if (this.state == 'active') {
+            if (this.mesh())  this.mesh().material.visible = false;
+            this.state = 'inactive';
+        }
     }
 
 }
 
+export class MeshNode extends Node{ 
+
+    constructor(params,state = 'active'){ 
+        super(params,state)
+      }
+    
+
+}
 
 export class QuadTreeNode extends Node{
 
-    constructor(params, normalize){ 
+    constructor(params, normalize, state = 'active'){ 
 
-        super(params)
+        super(params, state)
         
         this.boundingInfo = {
             boundingBox : new THREE.Box3(),
@@ -30,20 +140,18 @@ export class QuadTreeNode extends Node{
             boundingHalfPoints : []
         }
 
-        this.neighbors   = new Set()
+        this.nodekey     = null
 
-        this.meshNodeKey = undefined
+        this.neighbors   = new Set()
 
         this.normalize   = normalize
 
         this.initializeTransform() 
     }
 
+    generateKey(){ this.nodekey = generateKey(this) }
 
-    addMeshNode(meshNode){
-        this.meshNode  = meshNode
-    }
-
+ 
 
     initializeTransform() {
         const { matrixRotationData, offset } = this.params;
@@ -105,6 +213,8 @@ export class QuadTreeNode extends Node{
 
             this.position.copy(M)
 
+            this.boundingInfo.boundingBox.translate(this.position.clone().negate())
+
         }else{
 
 
@@ -132,9 +242,9 @@ export class QuadTreeNode extends Node{
 
             this.position.copy(M)
 
-        }
+            this.boundingInfo.boundingBox.translate(this.position.clone().negate())
 
-        this.meshNodeKey = generateKey(this)
+        }
 
     }
 
@@ -142,41 +252,30 @@ export class QuadTreeNode extends Node{
 
         let { direction, matrixRotationData, size, offset,index } = this.params;
 
-        let depth  = this.params.depth + 1
+        let depth = this.params.depth + 1
 
-        let axis = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
+        let axis  = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
 
         let resolution = primitive.controller.config.arrybuffers[(size/2)].geometryData.parameters.widthSegments
          
         size = (size/2)
 
-        let {points,averages }= createLocations((size/2), offset, axis) 
+        let { points, averages }= createLocations((size/2), offset, axis) 
 
         points.forEach((location,idx) => {
 
             index = `${index} -> ${cordinate(idx)}`
 
-            let quadtreeNode = primitive.createQuadtreeNode({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
- 
-            this._children.push(quadtreeNode)
+            let nodeinterface = primitive.createNodeinterface({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
+
+            primitive.createQuadtreeNode(nodeinterface)
+
+            nodeinterface.dataNode().hideMesh()
+
+            this._children.push(nodeinterface)
 
         });
     
-    }
-
-
-    visibleNodes(OBJECT3D, primitive) {
-        const nodes = [];
-        const traverse = (node) => {
-            const distance = node.position.distanceTo(OBJECT3D.position);
-            if (isWithinBounds(distance, primitive, node.params.size)) {
-                node._children.forEach(traverse);
-            } else {
-                nodes.push(node);
-            }
-        };
-        traverse(this);
-        return nodes;
     }
 
 }
@@ -256,37 +355,4 @@ export class OctreeNode extends Node{
 }
 
 
-export class MeshNode extends Node{ 
-
-    constructor(params,state = 'active'){ 
-        super(params)
-        this.state = state 
-     }
-    
-    add(mesh){
-        if (this.state !== 'active')  mesh.material.visible = false;
-        super.add(mesh)
-        return this
-    }
-
-    mesh(){
-        if (this.children[0] instanceof THREE.Mesh) // todo
-        return this.children[0]
-    }
-
-    showMesh() {
-        if (this.state !== 'active') {
-            this.mesh().material.visible  = true;
-            this.state = 'active';
-        }
-      }
-
-    hideMesh() {
-        if (this.state == 'active') {
-            this.mesh().material.visible = false;
-            this.state = 'inactive';
-        }
-    }
-
-}
 

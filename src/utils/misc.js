@@ -50,12 +50,12 @@ export function getRandomColor() {
   }
   
   //https://discourse.threejs.org/t/vertex-shader-sphere-projection-and-cpu-distance-calculation/56270/17
-  export function project( v, r, center )
+  /*export function project( v, r, center )
   {
       v.sub( center )
       .setLength( r )
       .add( center );
-  }
+  }*/
   
   
 

@@ -2,8 +2,17 @@
 import { Controller,QuadTree } from './dataStructures/quadtree.js'
 import { geometrySelector } from './geometry.js'
 import { workersSRC } from './webWorker/workerThread.js'
-import { MeshNode,QuadTreeNode } from './dataStructures/nodes.js'
-import { createCanvasTexture,bufferInit,threadingInit,geometryInit,meshInit,createDimensions,createDimension } from './utils.js'
+import { MeshNode,QuadTreeNode,Nodeinterface } from './dataStructures/nodes.js'
+import { 
+  createCanvasTexture,
+  bufferInit,
+  threadingInit,
+  geometryInit,
+  meshInit,
+  createDimensions,
+  createDimension,
+  box3Mesh
+ } from './utils.js'
  
 import * as _THREE from 'three'
 import * as TSL from 'three/tsl'
@@ -11,17 +20,10 @@ import * as WG from 'three/webgpu'
 
 const THREE = {..._THREE,...TSL,...WG}
 
-export const isSphere = (obj) => obj.type === 'Sphere';
+export const isSphere = (obj) => obj.constructor.__type === 'Sphere'
 
-const setTypeProperty = (primitive,value) =>{
-  Object.defineProperty(primitive, 'type', {
-    value: value,       
-    writable: false,     
-    configurable: false  
-  });
-}
- 
 export class Primitive extends THREE.Object3D {
+  static __type = 'Primitive'
 
   constructor(params) {
 
@@ -60,18 +62,22 @@ export class Primitive extends THREE.Object3D {
     this.quadTree = new QuadTree();
   }
 
-  createPlane({ quadTreeNode, meshNode, parent }) {
+  createPlane({ meshNode }) {
+
     const { geometryClass, additionalPayload } = geometrySelector(this);
+
     const {
       size,
       matrixRotationData,
       offset,
       direction,
-      segments: resolution,
-    } = quadTreeNode.params;
-    const { material, callBacks } = this.controller.config;
-    const { buffers, views }      = bufferInit(this.controller.config.arrybuffers[size].geometryData, geometryClass);
+      resolution,
+    } = meshNode.params
 
+    const { material, callBacks } = this.controller.config;
+
+    const { buffers, views }      = bufferInit(this.controller.config.arrybuffers[size].geometryData, geometryClass);
+ 
     const threadController  = threadingInit(geometryClass, workersSRC);
     threadController.setPayload({
       direction,
@@ -91,7 +97,8 @@ export class Primitive extends THREE.Object3D {
         createCanvasTexture(callBacks.setTextures(), material, payload.data.imageBitmapResult);
 
         const mesh = meshInit(geometry, material, payload.data.centerdPosition);
-        parent.add(meshNode.add(mesh));
+        mesh.position.copy(meshNode.position.clone().negate())
+        meshNode.add(mesh)
 
         callBacks.afterMeshNodeCreation(meshNode);
         resolve(meshNode);
@@ -99,32 +106,69 @@ export class Primitive extends THREE.Object3D {
     });
   }
 
-  createQuadtreeNode({ matrixRotationData, offset, index, direction, initializationData = this.parameters }) {
-    const { depth, size, resolution: segments } = initializationData;
-    const quadTreeNode = new QuadTreeNode(
-      { index, offset, direction, depth, matrixRotationData, size, segments, controller: this.controller },
-      isSphere(this)
-    );
 
-    quadTreeNode.setBounds(this.add(quadTreeNode));
-    this.controller.config.callBacks.afterQuadTreeNodeCreation(quadTreeNode);
-    return quadTreeNode;
+  createNodeinterface({ matrixRotationData, offset, index, direction, initializationData = this.parameters }){
+    const { depth, size, resolution } = initializationData;
+
+    const nodeinterface = new Nodeinterface({ 
+      index, 
+      offset, 
+      direction, 
+      depth, 
+      matrixRotationData, 
+      size, 
+      resolution, 
+      controller: this.controller
+    })
+
+    this.add(nodeinterface)
+
+    return nodeinterface
   }
+
+  createQuadtreeNode( nodeinterface ) {
+    
+    const quadTreeNode = new QuadTreeNode( nodeinterface.sharderParameters, isSphere(this));
+
+    nodeinterface.add(quadTreeNode)
+
+    nodeinterface.dataNode().setBounds(this);
+
+    nodeinterface.dataNode().generateKey()
+    
+    this.controller.config.callBacks.afterQuadTreeNodeCreation(nodeinterface.dataNode())
+
+   return nodeinterface.dataNode();
+  }
+
+
 
   createMeshNodes() {
-    this._createMeshNodes = ({ quadTreeNode, initialState = 'active', parent = this }) => {
-      let meshNode = new MeshNode(quadTreeNode.params, initialState) 
-      meshNode = this.createPlane({ quadTreeNode, meshNode, parent }) 
-      quadTreeNode.addMeshNode(meshNode)
-      this.addNode(quadTreeNode.meshNodeKey,quadTreeNode)
-      return quadTreeNode.meshNode;
+
+    this._createMeshNodes = ({ nodeinterface, initialState = 'active' }) => {
+
+      let meshNode = new MeshNode(nodeinterface.sharderParameters, initialState) 
+
+      meshNode.position.copy(nodeinterface.dataNode().position)
+
+      nodeinterface.add(meshNode)
+      
+      let promiseMeshNode = this.createPlane({ meshNode: nodeinterface.visualNode() }) 
+      
+      nodeinterface.setVisualNode(promiseMeshNode)
+
+      return nodeinterface.visualNode();
+
     };
+
   }
+
+ 
 
   createDimensions() {
     const { size: w, dimension: d } = this.parameters;
     const k = (w / 2) * d;
-    const creation = this.type === 'Quad' ? createDimension : createDimensions;
+    const creation = this.constructor.__type === 'Quad' ? createDimension : createDimensions;
 
     for (let i = 0; i < d; i++) {
       const i_ = i * (w - 1) + i - (w / 2) * (d - 1);
@@ -138,12 +182,13 @@ export class Primitive extends THREE.Object3D {
 
 
 export class BatchedPrimitive extends Primitive{
+  static __type = 'BatchedPrimitive'
 
-  constructor(type,params){
+  constructor(primitive,params){
     
     super(params)
 
-    this.type = type
+     this.constructor.__type = primitive.__type // dont like the idea this redefines what the actual type is
 
     if(isSphere(this)) this.controller.config.radius = params.radius
     
@@ -159,7 +204,7 @@ export class BatchedPrimitive extends Primitive{
 
     let promises = []
 
-    this.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
+    this.quadTreeCollections.forEach((nodeinterface) => {promises.push(nodeinterface.visualNode()) })
 
     this.batchedMesh = Promise.all(promises).then( _ => {
 
@@ -191,11 +236,11 @@ export class BatchedPrimitive extends Primitive{
 
         let indexCount  = ((vertex**2)*6)
 
-        let maxInstanceCount  =   batchedMesh.maxInstanceCount + 1
+        let maxInstanceCount = batchedMesh.maxInstanceCount + 1
 
-        let maxVertexCount    =   batchedMesh._maxVertexCount + vertexCount // doc shows its without the undscore
+        let maxVertexCount   = batchedMesh._maxVertexCount  + vertexCount // doc shows _maxVertexCount without the undscore
 
-        let maxIndexCount     =   batchedMesh._maxIndexCount  + indexCount // doc shows its without the undscore
+        let maxIndexCount    = batchedMesh._maxIndexCount   + indexCount // doc shows _maxIndexCount without the undscore
 
         batchedMesh.setInstanceCount(maxInstanceCount)
 
@@ -207,7 +252,7 @@ export class BatchedPrimitive extends Primitive{
 
         const matrix = new THREE.Matrix4();
 
-        matrix.premultiply(new THREE.Matrix4().makeTranslation(...node.mesh().position.toArray()));
+        matrix.premultiply(new THREE.Matrix4().makeTranslation(...parent.position.toArray()));
 
         batchedMesh.setMatrixAt( id, matrix );
 
@@ -220,95 +265,24 @@ export class BatchedPrimitive extends Primitive{
 }
 
 
-export class Quad extends Primitive{
+export class Quad  extends Primitive{
+  static __type = 'Quad'
   constructor(params){
     super(params)
-    setTypeProperty(this,'Quad')
    }
 }
 
-export class Cube extends Quad{
+export class Cube  extends Quad{
+  static __type = 'Cube'
   constructor(params){
     super(params) 
-    setTypeProperty(this,'Cube')
    }
 }
 
 export class Sphere extends Cube{
+  static __type = 'Sphere'
   constructor(params){
     super(params) 
-    setTypeProperty(this,'Sphere')
     this.controller.config.radius = params.radius
   }
 }
-
-
-/*
-
-function initBatchedMeshData(primitive) {
-
-  const length = primitive.controller.config.levels.numOflvls
-  const result = [];
-  let maxVertexCount   = primitive.controller.config.levels.maxLevelVertexCount
-  let maxIndexCount    = primitive.controller.config.levels.maxLevelIndexCount
-  let maxInstanceCount = primitive.controller.config.levels.maxLevelInstanceCount
- 
-  const sumArray = (arr) => arr.reduce((sum, value) => sum + value, 0);
-  return [sumArray(maxInstanceCount), sumArray(maxVertexCount), sumArray(maxIndexCount)];
-
-}
- 
-export class BatchedPrimitive extends THREE.BatchedMesh{
-
-  constructor( primitive ){
-
-    let material = new THREE.MeshStandardMaterial()
- 
-    super(...initBatchedMeshData(primitive),material)
-
-    this.primitive = primitive
-
-    return this.#_transferGeometry(primitive)
-
-    }
-
-  #_transferGeometry(primitive){
-
-    //let userCallBacks = primitive.controller.config.callBacks.afterMeshNodeCreation
-
-    primitive.controller.config.callBacks.afterMeshNodeCreation = node => {
-
-      const parent = node.parent;
-
-      parent.remove( node );
-
-      let geometry = node.mesh().geometry 
-
-      const geometryId = this.addGeometry( geometry );
-      
-      const id = this.addInstance( geometryId );
-
-      const matrix = new THREE.Matrix4();
-
-      matrix.premultiply(new THREE.Matrix4().makeTranslation(...node.mesh().position.toArray()));
-
-      this.setMatrixAt( id, matrix );
-
-      this.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) );
-
-    }
-
-    primitive.createDimensions()
-
-    let promises = []
-
-    this.primitive.quadTreeCollections.forEach((value) => promises.push(value.meshNode) )
-
-    return Promise.all(promises).then(meshNode =>  this)
-
-
-  }
-
-}  
-
-*/

@@ -404,7 +404,7 @@ export const geometrySelector = (primitive) =>{
     let geometryClass     = QuadGeometry  
     let additionalPayload = { }
 
-    if (primitive.type === 'Sphere'){
+    if (primitive.constructor.__type === 'Sphere'){
        geometryClass     =  NormalizedQuadGeometry 
        additionalPayload = { radius: primitive.controller.config.radius }
     }
