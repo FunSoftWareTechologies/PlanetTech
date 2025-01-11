@@ -26,7 +26,7 @@ export function getRandomColor() {
       throw new Error('Bad Hex');
   }
   
-  export function norm(val, max, min) { return (val - min) / (max - min); }
+  //export function norm(val, max, min) { return (val - min) / (max - min); }
   
   export function levelColor(levels){
     var colorArray = []

@@ -77,11 +77,11 @@ export const createLocations = (size, offset, axis) => {
 
 export const generateKey = node => `${node.params.index}_${node.params.direction}_${node.position.x}_${node.position.y}_${node.params.size}`
 
-export const createCanvasTexture = (setTextures,material,imageBitmap) =>{
-
-    const map = new THREE.CanvasTexture()
-
-    map.image =  imageBitmap
+export const createTexture = (imageBitmap) =>{
+ 
+  if(imageBitmap){
+    
+    const map = new THREE.CanvasTexture(imageBitmap)
 
     map.needsUpdate = true
     
@@ -91,7 +91,8 @@ export const createCanvasTexture = (setTextures,material,imageBitmap) =>{
    
    };
 
-   if (setTextures) material.map = map
+   return map
+  }
 
 }
 
@@ -189,58 +190,82 @@ const initializationData = (i_, j_, k) =>{
 
 //todo
 export const createDimensions = ( params ) => {
-
-  let { i_, j_, k, _index, primitive} = params
+ 
+  for (let i = 0; i < 6; i++) { createDimension(params, i) }
   
-  let initData = initializationData(i_, j_, k)
-
-  for (let i = 0; i < 6; i++) {
-
-    const {offset,direction,matrixRotationData} = initData[i];
-
-    let nodeinterface = primitive.createNodeinterface({ 
-      matrixRotationData , 
-      offset ,
-      index:_index,
-      direction ,
-    })
-
-    primitive.createQuadtreeNode(nodeinterface)
-
-    primitive.quadTree.rootNodes.push(nodeinterface)
-
-    primitive._createMeshNodes({nodeinterface})
-
-    primitive.addNode(nodeinterface.dataNode().nodekey,nodeinterface)
-  }
 }
 
 //todo
-export const createDimension = ( params ) => {
+export const createDimension = ( params, idx = 0 ) => {
 
   let { i_, j_, k, _index, primitive } = params
 
   let initData = initializationData(i_, j_, k)
 
-    const {offset,direction,matrixRotationData} = initData[0];
+  const {offset,direction,matrixRotationData} = initData[idx];
 
-    let nodeinterface = primitive.createNodeinterface({ 
-      matrixRotationData , 
-      offset ,
-      index:_index,
-      direction ,
-    })
+  let quadTreeNode = primitive.createQuadTreeNode({ 
+    matrixRotationData , 
+    offset ,
+    index:_index,
+    direction ,
+  })
 
-
-  primitive.createQuadtreeNode(nodeinterface)
-
-  primitive.quadTree.rootNodes.push(nodeinterface)
-
-  primitive._createMeshNodes({nodeinterface})
-
-  primitive.addNode(nodeinterface.dataNode().nodekey,nodeinterface)
-
+  primitive.createSpatialNode(quadTreeNode)
+  primitive.quadTree.rootNodes.push(quadTreeNode)
+  primitive._createMeshNodes({quadTreeNode})
+  primitive.addNode(quadTreeNode.getSpatialNode().nodekey,quadTreeNode)
 }
 
 
 export const box3Mesh = (boundingBox, color) => new THREE.Box3Helper( boundingBox, color)
+
+export function norm(val, max, min) { return (val - min) / (max - min); }
+
+export function createUVObject() {
+  return {
+    uv: THREE.uv(), // Store the UV value
+
+    update: function (node) {
+      let maxLevelSize = node.params.controller.config.maxLevelSize;
+
+      const w = node.params.size;
+      const d = node.params.controller.config.dimensions;
+      const testscaling = w / (maxLevelSize * d);
+      const halfScale = testscaling / 2;
+      const position = node.localToWorld(new THREE.Vector3());
+
+      const nxj = norm(position.x, (maxLevelSize * d) / 2, -(maxLevelSize * d) / 2);
+      const nyj = norm(position.y, (maxLevelSize * d) / 2, -(maxLevelSize * d) / 2);
+      const offSets = new THREE.Vector2(nxj - halfScale, nyj - halfScale);
+      this.uv = this.uv.mul(testscaling).add(offSets);
+
+      return this ;
+    },
+
+    scale:function ( scaleValue = 1 ) {
+      this.uv = this.uv.sub(0.5).div(scaleValue).add(0.5);
+      return this ;
+    },
+
+    offset:function ( offsetValueX = 0, offsetValueY = 0 ) {
+      this.uv = this.uv.sub(THREE.vec2(offsetValueX,offsetValueY))
+      return this ;
+    },
+
+    getUV:function () { return this.uv  }
+  };
+}
+
+
+export const createCallBackPayload = (params) => {
+  let { meshNode, imageBitmap } = params
+
+  const uv  = createUVObject().update(meshNode)
+  const map = createTexture(imageBitmap)
+
+  return{
+    uv,
+    map
+  }
+}

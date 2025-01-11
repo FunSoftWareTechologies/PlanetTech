@@ -22,8 +22,8 @@ export class Controller {
       displacmentScale:1,
       material: new THREE.MeshBasicMaterial({ color: "grey" }),
       callBacks:{
-        afterMeshNodeCreation: node => undefined,
-        afterQuadTreeNodeCreation: node => undefined,
+        afterMeshNodeCreation: (node,payload) => undefined,
+        afterSpatialNodeCreation: (node,payload) => undefined,
         setTextures: () => undefined,
       },
      }
@@ -103,44 +103,44 @@ export class QuadTree {
 
   }
   
-  insert(OBJECT3D,primitive,nodeinterface){
+  insert(OBJECT3D,primitive,quadTreeNode){
 
-    let quadtreeNode = nodeinterface.dataNode()
+    let spatialNode = quadTreeNode.getSpatialNode()
 
-    let distance = quadtreeNode.position.distanceTo(OBJECT3D.position)
+    let distance = spatialNode.position.distanceTo(OBJECT3D.position)
   
-    if ( isWithinBounds(distance, primitive, quadtreeNode.params.size) ) {
+    if ( isWithinBounds(distance, primitive, spatialNode.params.size) ) {
   
-        if (quadtreeNode._children.length === 0)  quadtreeNode.subdivide(primitive) 
+        if (spatialNode._children.length === 0)  spatialNode.subdivide(primitive) 
  
-        quadtreeNode._children.forEach(child=>this.insert(OBJECT3D,primitive,child))
+          spatialNode._children.forEach(child=>this.insert(OBJECT3D,primitive,child))
 
      }
   }
 
-  visibleNodes(OBJECT3D, primitive, rootNodeNodeinterface) {
+  visibleNodes(OBJECT3D, primitive, rootNodeQuadTreeNode) {
     
     const nodes = [];
 
-    const traverse = (nodeinterface) => {
+    const traverse = (quadTreeNode) => {
 
-        let node = nodeinterface.dataNode()
+        let spatialNode = quadTreeNode.getSpatialNode()
 
-        const distance = node.position.distanceTo(OBJECT3D.position);
+        const distance = spatialNode.position.distanceTo(OBJECT3D.position);
 
-        if (isWithinBounds(distance, primitive, node.params.size)) {
+        if (isWithinBounds(distance, primitive, spatialNode.params.size)) {
 
-            node._children.forEach(traverse);
+          spatialNode._children.forEach(traverse);
 
         } else {
 
-            nodes.push(nodeinterface);
+            nodes.push(quadTreeNode);
 
         }
 
     };
 
-    traverse(rootNodeNodeinterface);
+    traverse(rootNodeQuadTreeNode);
 
     return nodes;
   }
@@ -150,7 +150,7 @@ export class QuadTree {
       
     const visibleQuadTreeNodes = new Set();
 
-    this.rootNodes.forEach((nodeinterface) => this.#_update(OBJECT3D, primitive, nodeinterface, visibleQuadTreeNodes))
+    this.rootNodes.forEach((quadTreeNode) => this.#_update(OBJECT3D, primitive, quadTreeNode, visibleQuadTreeNodes))
     
     for (const [key, value] of primitive.quadTreeCollections.entries()) {
 
@@ -163,19 +163,19 @@ export class QuadTree {
   }
 
 
- #_update(OBJECT3D, primitive, nodeinterface, visibleQuadTreeNodes) {
+ #_update(OBJECT3D, primitive, quadTreeNode, visibleQuadTreeNodes) {
     
-    this.insert(OBJECT3D, primitive, nodeinterface);
+    this.insert(OBJECT3D, primitive, quadTreeNode);
 
-    const visibleNodes = this.visibleNodes(OBJECT3D, primitive, nodeinterface);
+    const visibleNodes = this.visibleNodes(OBJECT3D, primitive, quadTreeNode);
 
     for (const node of visibleNodes) {
 
-      const key = node.dataNode().nodekey;
+      const key = node.getSpatialNode().nodekey;
   
       if (!primitive.quadTreeCollections.has(key)) {
 
-        primitive._createMeshNodes({nodeinterface:node,initialState:'inactive'})
+        primitive._createMeshNodes({quadTreeNode:node,initialState:'inactive'})
 
         primitive.addNode(key,node)
 
@@ -186,7 +186,7 @@ export class QuadTree {
         visibleQuadTreeNodes.add(key);
 
         //todo
-        if (nodeinterface.dataNode().nodekey === key) {
+        if (quadTreeNode.getSpatialNode().nodekey === key) {
   
           let value = primitive.quadTreeCollections.get(key)
   

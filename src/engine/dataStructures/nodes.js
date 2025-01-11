@@ -6,9 +6,9 @@ import * as WG from 'three/webgpu'
 
 const THREE = {..._THREE,...TSL,...WG}
 
-export class Nodeinterface extends THREE.Object3D{
-    #_visualNode = null
-    #_dataNode   = null
+export class QuadTreeNode extends THREE.Object3D{
+    #_meshNode = null
+    #_spatialNode   = null
 
     constructor(sharderParameters){
         super()
@@ -16,69 +16,69 @@ export class Nodeinterface extends THREE.Object3D{
     }
 
     add(mesh){
-        if (mesh instanceof MeshNode){ this.#_visualNode = mesh}
-        else if (mesh instanceof QuadTreeNode) {this.#_dataNode = mesh}
+        if (mesh instanceof MeshNode){ this.#_meshNode = mesh}
+        else if (mesh instanceof SpatialNode) {this.#_spatialNode = mesh}
         super.add(mesh)
         return this
     }
 
-    dataNode(){
-        return this.#_dataNode   
+    getSpatialNode(){
+        return this.#_spatialNode   
     }
 
-    visualNode(){
-        return this.#_visualNode  
+    getMeshNode(){
+        return this.#_meshNode  
     }
 
-    setDataNode(node){
-        this.#_dataNode  = node
+    setSpatialNode(node){
+        this.#_spatialNode = node
     }
 
-    setVisualNode(node){
-       this.#_visualNode = node
+    setMeshNode(node){
+       this.#_meshNode = node
     }
 
     hideChildren(){
 
-        Promise.all(this.dataNode()._children.map(v=> v.visualNode())).then(k=>{
+        Promise.all(this.getSpatialNode()._children.map(v=> v.getMeshNode())).then(k=>{
   
             k.forEach(r=> r.hideMesh())
 
-            this.dataNode()._children.forEach(r=> r.dataNode().hideMesh())
+            this.getSpatialNode()._children.forEach(r=> r.getSpatialNode().hideMesh())
   
-            this.visualNode().then(j=> {
+            this.getMeshNode().then(j=> {
                 
                 j.showMesh()
 
-                this.dataNode().showMesh()
+                this.getSpatialNode().showMesh()
             })
 
-          }) 
+        }) 
     }
 
 
     showChildren(){
 
-        Promise.all(this.dataNode()._children.map(v=> v.visualNode())).then(k=>{
+        Promise.all(this.getSpatialNode()._children.map(v=> v.getMeshNode())).then(k=>{
           
             k.forEach(r=> r.showMesh() )
   
-            this.dataNode()._children.forEach(r=> r.dataNode().showMesh())
+            this.getSpatialNode()._children.forEach(r=> r.getSpatialNode().showMesh())
   
-            this.visualNode().then(j=>{ 
+            this.getMeshNode().then(j=>{ 
 
                 j.hideMesh()
 
-                this.dataNode().hideMesh()
+                this.getSpatialNode().hideMesh()
             })
   
-          })
+        })
     }
 
 } 
 
 
-class Node extends THREE.Object3D{ 
+export class Node extends THREE.Object3D{ 
 
     constructor(params,state){ 
       super() 
@@ -120,15 +120,12 @@ class Node extends THREE.Object3D{
 }
 
 export class MeshNode extends Node{ 
-
     constructor(params,state = 'active'){ 
         super(params,state)
       }
-    
-
 }
 
-export class QuadTreeNode extends Node{
+export class SpatialNode extends Node{
 
     constructor(params, normalize, state = 'active'){ 
 
@@ -266,21 +263,19 @@ export class QuadTreeNode extends Node{
 
             index = `${index} -> ${cordinate(idx)}`
 
-            let nodeinterface = primitive.createNodeinterface({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
+            let quadTreeNode = primitive.createQuadTreeNode({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
 
-            primitive.createQuadtreeNode(nodeinterface)
+            primitive.createSpatialNode(quadTreeNode)
 
-            nodeinterface.dataNode().hideMesh()
+            quadTreeNode.getSpatialNode().hideMesh()
 
-            this._children.push(nodeinterface)
+            this._children.push(quadTreeNode)
 
         });
     
     }
 
 }
-
-
 
 export class OctreeNode extends Node{
   constructor(bounds, minNodeSize) {

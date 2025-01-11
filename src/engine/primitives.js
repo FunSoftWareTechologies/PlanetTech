@@ -2,7 +2,7 @@
 import { Controller,QuadTree } from './dataStructures/quadtree.js'
 import { geometrySelector } from './geometry.js'
 import { workersSRC } from './webWorker/workerThread.js'
-import { MeshNode,QuadTreeNode,Nodeinterface } from './dataStructures/nodes.js'
+import { MeshNode,QuadTreeNode,SpatialNode } from './dataStructures/nodes.js'
 import { 
   createCanvasTexture,
   bufferInit,
@@ -11,7 +11,8 @@ import {
   meshInit,
   createDimensions,
   createDimension,
-  box3Mesh
+  box3Mesh, 
+  createCallBackPayload
  } from './utils.js'
  
 import * as _THREE from 'three'
@@ -94,23 +95,27 @@ export class Primitive extends THREE.Object3D {
       threadController.getPayload((payload) => {
 
         const geometry = geometryInit({ size, resolution, additionalPayload, geometryClass, views });
-        createCanvasTexture(callBacks.setTextures(), material, payload.data.imageBitmapResult);
-
+ 
         const mesh = meshInit(geometry, material, payload.data.centerdPosition);
         mesh.position.copy(meshNode.position.clone().negate())
         meshNode.add(mesh)
 
-        callBacks.afterMeshNodeCreation(meshNode);
+        const callBackPayload = createCallBackPayload({
+          meshNode,
+          imageBitmap: payload.data.imageBitmapResult
+        })
+ 
+        callBacks.afterMeshNodeCreation(meshNode,callBackPayload);
         resolve(meshNode);
       });
     });
   }
 
 
-  createNodeinterface({ matrixRotationData, offset, index, direction, initializationData = this.parameters }){
+  createQuadTreeNode({ matrixRotationData, offset, index, direction, initializationData = this.parameters }){
     const { depth, size, resolution } = initializationData;
 
-    const nodeinterface = new Nodeinterface({ 
+    const quadTreeNode = new QuadTreeNode({ 
       index, 
       offset, 
       direction, 
@@ -121,43 +126,43 @@ export class Primitive extends THREE.Object3D {
       controller: this.controller
     })
 
-    this.add(nodeinterface)
+    this.add(quadTreeNode)
 
-    return nodeinterface
+    return quadTreeNode
   }
 
-  createQuadtreeNode( nodeinterface ) {
+  createSpatialNode( quadTreeNode ) {
     
-    const quadTreeNode = new QuadTreeNode( nodeinterface.sharderParameters, isSphere(this));
+    const spatialNode = new SpatialNode( quadTreeNode.sharderParameters, isSphere(this));
 
-    nodeinterface.add(quadTreeNode)
+    quadTreeNode.add(spatialNode)
 
-    nodeinterface.dataNode().setBounds(this);
+    quadTreeNode.getSpatialNode().setBounds(this);
 
-    nodeinterface.dataNode().generateKey()
+    quadTreeNode.getSpatialNode().generateKey()
     
-    this.controller.config.callBacks.afterQuadTreeNodeCreation(nodeinterface.dataNode())
+    this.controller.config.callBacks.afterSpatialNodeCreation(quadTreeNode.getSpatialNode())
 
-   return nodeinterface.dataNode();
+   return quadTreeNode.getSpatialNode();
   }
 
 
 
   createMeshNodes() {
 
-    this._createMeshNodes = ({ nodeinterface, initialState = 'active' }) => {
+    this._createMeshNodes = ({ quadTreeNode, initialState = 'active' }) => {
 
-      let meshNode = new MeshNode(nodeinterface.sharderParameters, initialState) 
+      let meshNode = new MeshNode(quadTreeNode.sharderParameters, initialState) 
 
-      meshNode.position.copy(nodeinterface.dataNode().position)
+      meshNode.position.copy(quadTreeNode.getSpatialNode().position)
 
-      nodeinterface.add(meshNode)
+      quadTreeNode.add(meshNode)
       
-      let promiseMeshNode = this.createPlane({ meshNode: nodeinterface.visualNode() }) 
+      let promiseMeshNode = this.createPlane({ meshNode: quadTreeNode.getMeshNode() }) 
       
-      nodeinterface.setVisualNode(promiseMeshNode)
+      quadTreeNode.setMeshNode(promiseMeshNode)
 
-      return nodeinterface.visualNode();
+      return quadTreeNode.getMeshNode();
 
     };
 
@@ -204,7 +209,7 @@ export class BatchedPrimitive extends Primitive{
 
     let promises = []
 
-    this.quadTreeCollections.forEach((nodeinterface) => {promises.push(nodeinterface.visualNode()) })
+    this.quadTreeCollections.forEach((quadTreeNode) => {promises.push(quadTreeNode.getMeshNode()) })
 
     this.batchedMesh = Promise.all(promises).then( _ => {
 
@@ -256,7 +261,7 @@ export class BatchedPrimitive extends Primitive{
 
         batchedMesh.setMatrixAt( id, matrix );
 
-        batchedMesh.setColorAt( id, new THREE.Color( Math.random() * 0xffffff ) )
+        batchedMesh.setColorAt ( id, new THREE.Color( Math.random() * 0xffffff ) )
 
     } 
 
