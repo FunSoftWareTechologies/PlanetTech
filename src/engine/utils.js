@@ -222,40 +222,48 @@ export const box3Mesh = (boundingBox, color) => new THREE.Box3Helper( boundingBo
 
 export function norm(val, max, min) { return (val - min) / (max - min); }
 
+export const calculateUV = (node, scale , Offset)=>{
+  let maxLevelSize = node.params.controller.config.maxLevelSize;
+
+  const w = node.params.size;
+  const d = node.params.controller.config.dimensions * scale;
+  const testscaling = w / (maxLevelSize * d);
+   
+  const halfScale = testscaling / 2;
+  const position  = new THREE.Vector3(...node.params.offset) 
+
+  const nxj = norm(position.x, (maxLevelSize * d) / 2, -(maxLevelSize * d) / 2);
+  const nyj = norm(position.y, (maxLevelSize * d) / 2, -(maxLevelSize * d) / 2);
+  const offSets = new THREE.Vector2(nxj - halfScale, nyj - halfScale).sub(Offset);
+
+  return {offSets,testscaling}
+}
+
+
 export function createUVObject() {
+
+  let uv = {scale:1,offset:new THREE.Vector2(0,0)}
+
   return {
-    uv: THREE.uv(), // Store the UV value
-
-    update: function (node) {
-      let maxLevelSize = node.params.controller.config.maxLevelSize;
-
-      const w = node.params.size;
-      const d = node.params.controller.config.dimensions;
-      const testscaling = w / (maxLevelSize * d);
-      const halfScale = testscaling / 2;
-      const position = node.localToWorld(new THREE.Vector3());
-
-      const nxj = norm(position.x, (maxLevelSize * d) / 2, -(maxLevelSize * d) / 2);
-      const nyj = norm(position.y, (maxLevelSize * d) / 2, -(maxLevelSize * d) / 2);
-      const offSets = new THREE.Vector2(nxj - halfScale, nyj - halfScale);
-      this.uv = this.uv.mul(testscaling).add(offSets);
-
-      return this ;
+   
+    update: function ( node, scale = 1, Offset = new THREE.Vector2(0,0) ) {
+      const {offSets, testscaling} = calculateUV(node,scale,Offset)
+      uv.scale  = testscaling   
+      uv.offset = uv.offset.copy(offSets)
+      return this
     },
 
-    scale:function ( scaleValue = 1 ) {
-      this.uv = this.uv.sub(0.5).div(scaleValue).add(0.5);
-      return this ;
-    },
+    getScale:function () { return uv.scale },
 
-    offset:function ( offsetValueX = 0, offsetValueY = 0 ) {
-      this.uv = this.uv.sub(THREE.vec2(offsetValueX,offsetValueY))
-      return this ;
-    },
+    getOffset:function () { return uv.offset },
 
-    getUV:function () { return this.uv  }
+    setScaleForTexture: function (texture) { texture.repeat.set( this.getScale(), this.getScale() ) },
+
+    setOffsetForTexture:function (texture) { texture.offset.copy(this.getOffset()) }
+
   };
 }
+
 
 
 export const createCallBackPayload = (params) => {
@@ -269,3 +277,6 @@ export const createCallBackPayload = (params) => {
     map
   }
 }
+
+
+ 

@@ -105,7 +105,7 @@ export class Primitive extends THREE.Object3D {
           imageBitmap: payload.data.imageBitmapResult
         })
  
-        callBacks.afterMeshNodeCreation(meshNode,callBackPayload);
+        callBacks.afterMeshCreation(meshNode,callBackPayload);
         resolve(meshNode);
       });
     });
@@ -225,7 +225,7 @@ export class BatchedPrimitive extends Primitive{
 
     let polyPerLevel = this.controller.config.levels.polyPerLevel
 
-     this.controller.config.callBacks.afterMeshNodeCreation = node => {
+     this.controller.config.callBacks.afterMeshCreation = node => {
  
         const parent = node.parent;
 

@@ -22,9 +22,10 @@ export class Controller {
       displacmentScale:1,
       material: new THREE.MeshBasicMaterial({ color: "grey" }),
       callBacks:{
-        afterMeshNodeCreation: (node,payload) => undefined,
-        afterSpatialNodeCreation: (node,payload) => undefined,
-        setTextures: () => undefined,
+        afterMeshNodeCreation:    (node) => undefined,
+        afterSpatialNodeCreation: (node) => undefined,
+        afterMeshCreation:        (node,payload) => undefined,
+        setTextures:              (  ) => undefined,
       },
      }
     this.config = Object.assign( shardedData, config )
