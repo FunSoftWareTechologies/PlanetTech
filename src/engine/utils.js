@@ -179,8 +179,8 @@ export const meshInit = (geometry, material,centerdPosition ) => {
 
 const initializationData = (i_, j_, k) =>{
   return  [
-      {offset: [i_, -j_,   k], direction:'+z', matrixRotationData: {propMehtod:'',input:0}},
-      {offset: [i_, -j_,  -k], direction:'-z', matrixRotationData: {propMehtod:'makeRotationY', input: Math.PI   }},
+      {offset: [i_, -j_,  k ], direction:'+z', matrixRotationData: {propMehtod:'',input:0}},
+      {offset: [i_, -j_, -k ], direction:'-z', matrixRotationData: {propMehtod:'makeRotationY', input: Math.PI   }},
       {offset: [k,  -j_, -i_], direction:'+x', matrixRotationData: {propMehtod:'makeRotationY', input: Math.PI/2 }},
       {offset: [-k, -j_, -i_], direction:'-x', matrixRotationData: {propMehtod:'makeRotationY', input:-Math.PI/2 }},
       {offset: [i_,  k,   j_], direction:'+y', matrixRotationData: {propMehtod:'makeRotationX', input:-Math.PI/2 }},
@@ -189,11 +189,7 @@ const initializationData = (i_, j_, k) =>{
 }
 
 //todo
-export const createDimensions = ( params ) => {
- 
-  for (let i = 0; i < 6; i++) { createDimension(params, i) }
-  
-}
+export const createDimensions = ( params ) => {  for (let i = 0; i < 6; i++) { createDimension(params, i) } }
 
 //todo
 export const createDimension = ( params, idx = 0 ) => {

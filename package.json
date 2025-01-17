@@ -29,5 +29,8 @@
   "devDependencies": {
     "jsdom": "^25.0.1",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d": "^0.14.0"
   }
 }

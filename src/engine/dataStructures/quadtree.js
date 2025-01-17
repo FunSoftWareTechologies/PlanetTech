@@ -20,7 +20,7 @@ export class Controller {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
-      material: new THREE.MeshBasicMaterial({ color: "grey" }),
+      material: new THREE.MeshBasicMaterial({ color: "black" }),
       callBacks:{
         afterMeshNodeCreation:    (node) => undefined,
         afterSpatialNodeCreation: (node) => undefined,
@@ -112,9 +112,9 @@ export class QuadTree {
   
     if ( isWithinBounds(distance, primitive, spatialNode.params.size) ) {
   
-        if (spatialNode._children.length === 0)  spatialNode.subdivide(primitive) 
+        if (quadTreeNode._children.length === 0)  quadTreeNode.subdivide(primitive) 
  
-          spatialNode._children.forEach(child=>this.insert(OBJECT3D,primitive,child))
+          quadTreeNode._children.forEach(child=>this.insert(OBJECT3D,primitive,child))
 
      }
   }
@@ -131,7 +131,7 @@ export class QuadTree {
 
         if (isWithinBounds(distance, primitive, spatialNode.params.size)) {
 
-          spatialNode._children.forEach(traverse);
+          quadTreeNode._children.forEach(traverse);
 
         } else {
 

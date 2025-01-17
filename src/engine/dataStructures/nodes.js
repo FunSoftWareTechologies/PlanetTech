@@ -7,11 +7,12 @@ import * as WG from 'three/webgpu'
 const THREE = {..._THREE,...TSL,...WG}
 
 export class QuadTreeNode extends THREE.Object3D{
-    #_meshNode = null
-    #_spatialNode   = null
+    #_meshNode    = null
+    #_spatialNode = null
 
     constructor(sharderParameters){
         super()
+        this._children = []
         this.sharderParameters = sharderParameters
     }
 
@@ -38,41 +39,65 @@ export class QuadTreeNode extends THREE.Object3D{
        this.#_meshNode = node
     }
 
-    hideChildren(){
+    subdivide(primitive){
 
-        Promise.all(this.getSpatialNode()._children.map(v=> v.getMeshNode())).then(k=>{
-  
-            k.forEach(r=> r.hideMesh())
+        let { 
+            matrixRotationData, 
+            index, 
+            depth, 
+            direction, 
+            resolution, 
+            size, 
+            points } = this.getSpatialNode().getSpatialAnalysis(primitive)
 
-            this.getSpatialNode()._children.forEach(r=> r.getSpatialNode().hideMesh())
-  
-            this.getMeshNode().then(j=> {
-                
-                j.showMesh()
+        points.forEach((location,idx) => {
 
-                this.getSpatialNode().showMesh()
-            })
+            index = `${index} -> ${cordinate(idx)}`
 
-        }) 
+            let quadTreeNode = primitive.createQuadTreeNode({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
+
+            primitive.createSpatialNode(quadTreeNode)
+
+            quadTreeNode.getSpatialNode().hideMesh()
+
+            this._children.push(quadTreeNode)
+
+        });
+    }
+
+    async hideChildren() {
+        const meshNodes = await Promise.all(this._children.map((child) => child.getMeshNode()));
+        meshNodes.forEach((node) => node?.hideMesh());
+    
+        this._children.forEach((child) => {
+            const spatialNode = child.getSpatialNode();
+            spatialNode?.hideMesh();
+        });
+    
+        const meshNode    = await this.getMeshNode();
+        const spatialNode = this.getSpatialNode();
+    
+        meshNode?.showMesh();
+        spatialNode?.showMesh();
     }
 
 
-    showChildren(){
+    async showChildren(){
 
-        Promise.all(this.getSpatialNode()._children.map(v=> v.getMeshNode())).then(k=>{
-          
-            k.forEach(r=> r.showMesh() )
-  
-            this.getSpatialNode()._children.forEach(r=> r.getSpatialNode().showMesh())
-  
-            this.getMeshNode().then(j=>{ 
+        const meshNodes = await Promise.all(this._children.map((child) => child.getMeshNode()));
+        meshNodes.forEach((node) => node?.showMesh());
 
-                j.hideMesh()
+        this._children.forEach((child) => {
+            const spatialNode = child.getSpatialNode();
+            spatialNode?.showMesh();
+        });
 
-                this.getSpatialNode().hideMesh()
-            })
-  
-        })
+        const meshNode    = await this.getMeshNode();
+        const spatialNode = this.getSpatialNode();
+    
+        meshNode?.hideMesh();
+        spatialNode?.hideMesh();
+
     }
 
 } 
@@ -84,7 +109,7 @@ export class Node extends THREE.Object3D{
       super() 
       this.params = params
       this.state  = state
-      this._children = []
+      
     }
 
     add(mesh){
@@ -245,7 +270,7 @@ export class SpatialNode extends Node{
 
     }
 
-    subdivide(primitive){
+    getSpatialAnalysis(primitive){
 
         let { direction, matrixRotationData, size, offset,index } = this.params;
 
@@ -253,26 +278,13 @@ export class SpatialNode extends Node{
 
         let axis  = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
 
-        let resolution = primitive.controller.config.arrybuffers[(size/2)].geometryData.parameters.widthSegments
+        let resolution = primitive.controller.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
          
-        size = (size/2)
+        size = ( size / 2 )
 
-        let { points, averages }= createLocations((size/2), offset, axis) 
+        let { points, averages }= createLocations(( size / 2 ), offset, axis) 
 
-        points.forEach((location,idx) => {
-
-            index = `${index} -> ${cordinate(idx)}`
-
-            let quadTreeNode = primitive.createQuadTreeNode({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
-
-            primitive.createSpatialNode(quadTreeNode)
-
-            quadTreeNode.getSpatialNode().hideMesh()
-
-            this._children.push(quadTreeNode)
-
-        });
-    
+        return { matrixRotationData, index, depth, direction, resolution, size, points }
     }
 
 }

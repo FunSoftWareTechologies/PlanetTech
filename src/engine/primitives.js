@@ -4,14 +4,12 @@ import { geometrySelector } from './geometry.js'
 import { workersSRC } from './webWorker/workerThread.js'
 import { MeshNode,QuadTreeNode,SpatialNode } from './dataStructures/nodes.js'
 import { 
-  createCanvasTexture,
   bufferInit,
   threadingInit,
   geometryInit,
   meshInit,
   createDimensions,
   createDimension,
-  box3Mesh, 
   createCallBackPayload
  } from './utils.js'
  
@@ -21,7 +19,19 @@ import * as WG from 'three/webgpu'
 
 const THREE = {..._THREE,...TSL,...WG}
 
-export const isSphere = (obj) => obj.constructor.__type === 'Sphere'
+export const isSphere = (primitive) => primitive.constructor.__type === 'Sphere'
+
+export const isCube   = (primitive) => primitive.constructor.__type === 'Cube'
+
+export const whichDimensionFn  = (primitive) => {
+
+  if(isSphere(primitive) || isCube(primitive)){
+    return createDimensions
+  }else{
+    return createDimension
+  }
+
+}
 
 export class Primitive extends THREE.Object3D {
   static __type = 'Primitive'
@@ -111,7 +121,6 @@ export class Primitive extends THREE.Object3D {
     });
   }
 
-
   createQuadTreeNode({ matrixRotationData, offset, index, direction, initializationData = this.parameters }){
     const { depth, size, resolution } = initializationData;
 
@@ -146,8 +155,6 @@ export class Primitive extends THREE.Object3D {
    return quadTreeNode.getSpatialNode();
   }
 
-
-
   createMeshNodes() {
 
     this._createMeshNodes = ({ quadTreeNode, initialState = 'active' }) => {
@@ -168,12 +175,10 @@ export class Primitive extends THREE.Object3D {
 
   }
 
- 
-
   createDimensions() {
     const { size: w, dimension: d } = this.parameters;
     const k = (w / 2) * d;
-    const creation = this.constructor.__type === 'Quad' ? createDimension : createDimensions;
+    const creation = whichDimensionFn(this) 
 
     for (let i = 0; i < d; i++) {
       const i_ = i * (w - 1) + i - (w / 2) * (d - 1);
