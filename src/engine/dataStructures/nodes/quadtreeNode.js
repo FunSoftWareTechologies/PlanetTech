@@ -1,10 +1,11 @@
-  
-import { project, createLocations, cordinate,generateKey } from '../utils.js';
 import * as _THREE from 'three'
 import * as TSL from 'three/tsl'
 import * as WG from 'three/webgpu'
+import { Node } from './baseNode.js' 
+import { project, createLocations, generateKey  } from '../../utils.js'
 
 const THREE = {..._THREE,...TSL,...WG}
+
 
 export class QuadTreeNode extends THREE.Object3D{
     #_meshNode    = null
@@ -17,8 +18,8 @@ export class QuadTreeNode extends THREE.Object3D{
     }
 
     add(mesh){
-        if (mesh instanceof MeshNode){ this.#_meshNode = mesh}
-        else if (mesh instanceof SpatialNode) {this.#_spatialNode = mesh}
+        if (mesh instanceof QuadTreeMeshNode){ this.#_meshNode = mesh}
+        else if (mesh instanceof QuadTreeSpatialNode) {this.#_spatialNode = mesh}
         super.add(mesh)
         return this
     }
@@ -103,54 +104,45 @@ export class QuadTreeNode extends THREE.Object3D{
 } 
 
 
-export class Node extends THREE.Object3D{ 
-
-    constructor(params,state){ 
-      super() 
-      this.params = params
-      this.state  = state
-      
-    }
-
-    add(mesh){
-        if (this.state !== 'active')  mesh.material.visible = false;
-        super.add(mesh)
-        return this
-    }
-
-    attach(mesh){
-        if (this.state !== 'active')  mesh.material.visible = false;
-        super.attach(mesh)
-        return this
-    }
-
-    mesh(){
-        return this.children[0] //todo
-    }
-
-    showMesh() {
-        if (this.state !== 'active') {
-            if (this.mesh()) this.mesh().material.visible = true;
-            this.state = 'active';
-        }
-      }
-
-    hideMesh() {
-        if (this.state == 'active') {
-            if (this.mesh())  this.mesh().material.visible = false;
-            this.state = 'inactive';
-        }
-    }
-
-}
-
-export class MeshNode extends Node{ 
+export class QuadTreeMeshNode extends Node{ 
     constructor(params,state = 'active'){ 
         super(params,state)
+
+        this.batchingData = {
+            instanceId:  null,
+            geometryId:  null,
+            batchedMesh: null
+        }
+
+      }
+
+      setBatchedMesh(batchedMesh){
+        this.batchingData.batchedMesh = batchedMesh
+      }
+
+      setInstanceId(instanceId){
+        this.batchingData.instanceId = instanceId
+      }
+
+      setGeometryId(geometryId){
+        this.batchingData.geometryId = geometryId
+      }
+
+      showMesh(){
+
+        super.showMesh()
+
+        //const visiblity = this.mesh().material.visible
+
+        //batchedMesh.setVisibleAt( this.batchingData.instanceId , visiblity ) 
+
       }
 }
 
-export class SpatialNode extends Node{
+
+
+
+export class QuadTreeSpatialNode extends Node{
 
     constructor(params, normalize, state = 'active'){ 
 
@@ -203,7 +195,7 @@ export class SpatialNode extends Node{
         
         if(this.normalize){
             
-            let radius =  this.params.controller.config.radius
+            let radius =  this.params.architecture.config.radius
             
             points.forEach((e,i)=>{
 
@@ -278,7 +270,7 @@ export class SpatialNode extends Node{
 
         let axis  = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
 
-        let resolution = primitive.controller.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
+        let resolution = primitive.architecture.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
          
         size = ( size / 2 )
 
@@ -288,78 +280,5 @@ export class SpatialNode extends Node{
     }
 
 }
-
-export class OctreeNode extends Node{
-  constructor(bounds, minNodeSize) {
-      super()
-      this.objIDs = [];
-      this.nodeBounds = bounds;
-      this.minSize = minNodeSize;
-
-      // Calculate bounds for child nodes
-      const boundsSize = this.nodeBounds.getSize(new THREE.Vector3());
-      const halfSize = boundsSize.y / 2;
-      const quarterSize = boundsSize.y / 4;
-      const childSize = new THREE.Vector3(halfSize, halfSize, halfSize);
-      const center = this.nodeBounds.getCenter(new THREE.Vector3());
-
-      // Generate child bounds
-      this.childBounds = Array(8)
-          .fill(null)
-          .map((_, i) => {
-              const offset = new THREE.Vector3(
-                  ((i & 1) === 0 ? -1 : 1) * quarterSize,
-                  ((i & 2) === 0 ? 1 : -1) * quarterSize,
-                  ((i & 4) === 0 ? -1 : 1) * quarterSize
-              );
-              const childCenter = center.clone().add(offset);
-              return new THREE.Box3().setFromCenterAndSize(childCenter, childSize);
-          });
-
-      this.children = [];
-  }
-
-  addObject(obj) {
-      this.divideAndAdd(obj);
-  }
-
-  divideAndAdd(obj) {
-      const box = obj.boundingBox;
-
-      const boundsSize = this.nodeBounds.getSize(new THREE.Vector3());
-      if (boundsSize.y <= this.minSize) {
-          this.objIDs.push(obj.uuid);
-          obj.octreeCells.push({ objID: this.objIDs, nodeBounds: this.nodeBounds });
-          return;
-      }
-
-      if (this.children.length === 0) {
-          this.children = Array(8).fill(null);
-      }
-
-      let isDivided = false;
-      this.childBounds.forEach((childBound, i) => {
-          if (childBound.intersectsBox(box)) {
-              if (!this.children[i]) {
-                  this.children[i] = new OctreeNode(childBound, this.minSize);
-              }
-              this.children[i].divideAndAdd(obj);
-              isDivided = true;
-          }
-      });
-
-      if (!isDivided) {
-          this.children = [];
-      }
-  }
-
-  draw(octTree) {
-    octTree.add(new THREE.Box3Helper(this.nodeBounds, 'green'));
-      this.children.forEach((child) => {
-          if (child) child.draw(octTree);
-      });
-  }
-}
-
 
 

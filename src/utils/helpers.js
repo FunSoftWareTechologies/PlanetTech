@@ -1,40 +1,5 @@
 import { BatchedPrimitive } from "../engine/primitives.js"
-import { Planet } from "../components/bodies/planet.js"
-
-export function createPrimitive(type,controllerParams,primitiveParams){
-
-    let primitive = new type(primitiveParams)
-    
-    primitive.controller.config.lodDistanceOffset = controllerParams.offset
-  
-    primitive.createQuadTree({levels:controllerParams.levels})
-  
-    primitive.createMeshNodes()
-  
-    primitive.createDimensions()
-  
-    return primitive
-  }
-  
-  
-  
-  
-  export function createBatchPrimitive(type,controllerParams,primitiveParams){
-  
-    let primitive = new BatchedPrimitive(type,primitiveParams)
-
-    primitive.controller.config.lodDistanceOffset = controllerParams.offset
-
-    primitive.createQuadTree({levels:controllerParams.levels})
-  
-    primitive.createMeshNodes()
-  
-    primitive.createDimensions()
-  
-    return primitive
-  }
-  
-  
+import { Planet } from "../components/bodies/celestialBody.js"
 
   export class PlanetGenerator{
 
@@ -46,9 +11,7 @@ export function createPrimitive(type,controllerParams,primitiveParams){
 
      createPlanet(planet,data){
 
-        planet.setCallBacks(data.callBacks)
-
-        planet.createSphere()
+        planet.createSphere(data.shpereData,data.callBacks)
 
         this.planets.push(planet)
 
@@ -58,7 +21,7 @@ export function createPrimitive(type,controllerParams,primitiveParams){
 
         planetData.forEach(data => {
             
-            this.createPlanet(new Planet(data.initilaztionParams,data.planetaryPhysics) , data)
+            this.createPlanet(new Planet(data.planetData) , data)
 
         })
 

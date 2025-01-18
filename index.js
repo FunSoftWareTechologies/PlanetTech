@@ -18,5 +18,5 @@ export * from './src/core/shaders/wgsl/noise.js'
 export * from './src/utils/helpers.js'
 export * from './src/engine/utils.js';
 
-export * from './src/components/bodies/planet.js'
+export * from './src/components/bodies/celestialBody.js'
 export * from './src/core/physics/engine.js';

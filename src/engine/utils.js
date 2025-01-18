@@ -72,7 +72,7 @@ export const createLocations = (size, offset, axis) => {
  export const cordinate = (idx) => ['NE','NW','SE','SW'][idx]
 
  export const isWithinBounds = (distance, primitive,size) => {
-   return ( (distance) < (primitive.controller.config.lodDistanceOffset * size) && size > primitive.controller.config.minLevelSize )
+   return ( (distance) < (primitive.architecture.config.lodDistanceOffset * size) && size > primitive.architecture.config.minLevelSize )
   };
 
 export const generateKey = node => `${node.params.index}_${node.params.direction}_${node.position.x}_${node.position.y}_${node.params.size}`
@@ -219,10 +219,10 @@ export const box3Mesh = (boundingBox, color) => new THREE.Box3Helper( boundingBo
 export function norm(val, max, min) { return (val - min) / (max - min); }
 
 export const calculateUV = (node, scale , Offset)=>{
-  let maxLevelSize = node.params.controller.config.maxLevelSize;
+  let maxLevelSize = node.params.architecture.config.maxLevelSize;
 
   const w = node.params.size;
-  const d = node.params.controller.config.dimensions * scale;
+  const d = node.params.architecture.config.dimensions * scale;
   const testscaling = w / (maxLevelSize * d);
    
   const halfScale = testscaling / 2;
@@ -275,4 +275,27 @@ export const createCallBackPayload = (params) => {
 }
 
 
- 
+export const callBackReplacer = (arrayA, arrayB) => {
+  const arrayAMap = new Map(arrayA.map(fn => [fn.name, fn]));
+
+  return arrayB.map(originalFn => {
+    const name = originalFn.name;
+    const replacementFn = arrayAMap.get(name);
+
+    if (replacementFn) {
+       
+      const wrappedFn = function (...args) {
+        
+        replacementFn.call(this, ...args);  
+         
+        originalFn.call(this, ...args);  
+      };
+
+      Object.defineProperty(wrappedFn, 'name', { value: name, writable: false });
+
+      return wrappedFn;
+    }
+
+    return originalFn;
+  });
+};

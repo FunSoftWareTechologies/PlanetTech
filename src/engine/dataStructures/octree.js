@@ -1,7 +1,7 @@
-import { OctreeNode } from './nodes.js'
 import * as _THREE from 'three'
 import * as TSL from 'three/tsl'
 import * as WG from 'three/webgpu'
+import { OctreeNode } from './nodes/octreeNode.js'
 
 const THREE = {..._THREE,...TSL,...WG}
 
