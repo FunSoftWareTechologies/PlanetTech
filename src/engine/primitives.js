@@ -1,46 +1,15 @@
  
+import * as THREE from 'three'
 import { QuadTree } from './dataStructures/quadtree.js'
 import { geometrySelector } from './geometry.js'
-import { workersSRC } from './webWorker/workerThread.js'
+import { workersSRC } from './threading/sorce.js'
 import { QuadTreeNode,QuadTreeMeshNode,QuadTreeSpatialNode } from './dataStructures/nodes/quadtreeNode.js'
-import { Architecture  } from './architecture.js'
+import { LevelArchitecture  } from './levelArchitecture.js'
+import { bufferInit,geometryInit,meshInit } from './utils/geometryUtils.js'
+import { threadingInit } from './utils/threadingUtils.js'
+import { isSphere,whichDimensionFn,createCallBackPayload } from './utils/primitiveUtils.js'
 
-import { 
-  bufferInit,
-  threadingInit,
-  geometryInit,
-  meshInit,
-  createDimensions,
-  createDimension,
-  createCallBackPayload
- } from './utils.js'
- 
-import * as _THREE from 'three'
-import * as TSL from 'three/tsl'
-import * as WG from 'three/webgpu'
 
-const THREE = {..._THREE,...TSL,...WG}
-
-export const isSphere = (primitive) => primitive.constructor.__type === 'Sphere'
-
-export const isCube   = (primitive) => primitive.constructor.__type === 'Cube'
-
-export const whichDimensionFn  = (primitive) => {
-
-  if(isSphere(primitive) || isCube(primitive)){
-    return createDimensions
-  }else{
-    return createDimension
-  }
-
-}
-
-export const setBatchDataPropertyOnNode = (node)=>{
-
-  node.batchingData = {}
-
-  return node
-}
 
 export class Primitive extends THREE.Object3D {
   static __type = 'Primitive'
@@ -55,7 +24,7 @@ export class Primitive extends THREE.Object3D {
 
     this.quadTreeCollections = new Map();
 
-    this.architecture        = new Architecture();
+    this.levelArchitecture   = new LevelArchitecture();
 
     this._createMeshNodes = () => {}
   }
@@ -72,15 +41,15 @@ export class Primitive extends THREE.Object3D {
   createQuadTree({ levels }) {
     const { size, resolution, dimension } = this.parameters;
 
-    Object.assign(this.architecture.config, {
+    Object.assign(this.levelArchitecture.config, {
       maxLevelSize: size,
       minLevelSize: size / Math.pow(2, levels - 1),
       minPolyCount: resolution,
       dimensions:   dimension,
     });
 
-    this.architecture.levels(levels);
-    this.architecture.createArrayBuffers();
+    this.levelArchitecture.levels(levels);
+    this.levelArchitecture.createArrayBuffers();
     this.quadTree = new QuadTree();
   }
 
@@ -96,9 +65,9 @@ export class Primitive extends THREE.Object3D {
       resolution,
     } = meshNode.params
 
-    const { material, callBacks } = this.architecture.config;
+    const { material } = this.levelArchitecture.config;
 
-    const { buffers, views }      = bufferInit(this.architecture.config.arrybuffers[size].geometryData, geometryClass);
+    const { buffers, views } = bufferInit(this.levelArchitecture.config.arrybuffers[size].geometryData, geometryClass);
  
     const threadarchitecture  = threadingInit(geometryClass, workersSRC);
     threadarchitecture.setPayload({
@@ -109,7 +78,7 @@ export class Primitive extends THREE.Object3D {
       resolution,
       ...buffers,
       ...additionalPayload,
-      ...callBacks.setTextures(),
+      ...this.levelArchitecture.trigger('setTextures')(),
     });
 
     return new Promise((resolve) => {
@@ -126,8 +95,8 @@ export class Primitive extends THREE.Object3D {
           imageBitmap: payload.data.imageBitmapResult
         })
  
-        callBacks.afterMeshCreation(meshNode,callBackPayload);
-        
+      
+        this.levelArchitecture.trigger('afterMeshCreation')(meshNode,callBackPayload)
         resolve(meshNode);
       });
     });
@@ -144,7 +113,7 @@ export class Primitive extends THREE.Object3D {
       matrixRotationData, 
       size, 
       resolution, 
-      architecture: this.architecture
+      levelArchitecture: this.levelArchitecture
     })
 
     this.add(quadTreeNode)
@@ -162,8 +131,8 @@ export class Primitive extends THREE.Object3D {
 
     quadTreeNode.getSpatialNode().generateKey()
     
-    this.architecture.config.callBacks.afterSpatialNodeCreation(quadTreeNode.getSpatialNode())
-
+    this.levelArchitecture.trigger('afterSpatialNodeCreation')(quadTreeNode.getSpatialNode())
+    
    return quadTreeNode.getSpatialNode();
   }
 
@@ -212,7 +181,7 @@ export class BatchedPrimitive extends Primitive{
 
      this.constructor.__type = primitive.__type // dont like the idea this redefines what the actual type is
 
-    if(isSphere(this)) this.architecture.config.radius = params.radius
+    if(isSphere(this)) this.levelArchitecture.config.radius = params.radius
     
   }
 
@@ -240,55 +209,51 @@ export class BatchedPrimitive extends Primitive{
 
   _transferGeometry(batchedMesh){
 
-    let polyPerLevel = this.architecture.config.levels.polyPerLevel
+    let polyPerLevel = this.levelArchitecture.config.levels.polyPerLevel
 
-    let prevAfterMeshCreation = this.architecture.config.callBacks.afterMeshCreation
+    let prevAfterMeshCreation = this.levelArchitecture.trigger('afterMeshCreation')  
 
-    this.architecture.config.callBacks.afterMeshCreation = ( node, payload ) => {
+    this.levelArchitecture.on('afterMeshCreation', ( node, payload ) => {
  
-        const parent = node.parent;
+      const parent = node.parent;
 
-        const visiblity = node.mesh().material.visible
+      parent.remove( node );
 
-        parent.remove( node );
+      const geometry  = node.mesh().geometry 
 
-        const geometry  = node.mesh().geometry 
+      const depth     = node.params.depth 
 
-        const depth     = node.params.depth 
+      const vertex    = polyPerLevel[depth] 
 
-        const vertex    = polyPerLevel[depth] 
+      const vertexCount = ( ( vertex + 1 ) * ( vertex + 1 ) )
 
-        const vertexCount = ( ( vertex + 1 ) * ( vertex + 1 ) )
+      const indexCount  = ( ( vertex**2  ) * 6 )
 
-        const indexCount  = ( ( vertex**2  ) * 6 )
+      const maxInstanceCount = batchedMesh.maxInstanceCount + 1
 
-        const maxInstanceCount = batchedMesh.maxInstanceCount + 1
+      const maxVertexCount   = batchedMesh._maxVertexCount  + vertexCount // doc shows _maxVertexCount without the undscore
 
-        const maxVertexCount   = batchedMesh._maxVertexCount  + vertexCount // doc shows _maxVertexCount without the undscore
+      const maxIndexCount    = batchedMesh._maxIndexCount   + indexCount // doc shows _maxIndexCount without the undscore
 
-        const maxIndexCount    = batchedMesh._maxIndexCount   + indexCount // doc shows _maxIndexCount without the undscore
+      batchedMesh.setInstanceCount( maxInstanceCount )
 
-        batchedMesh.setInstanceCount( maxInstanceCount )
+      batchedMesh.setGeometrySize ( maxVertexCount, maxIndexCount )
 
-        batchedMesh.setGeometrySize ( maxVertexCount, maxIndexCount )
- 
-        const geometryId = batchedMesh.addGeometry( geometry );
-        
-        const id = batchedMesh.addInstance( geometryId );
+      const geometryId = batchedMesh.addGeometry( geometry );
+      
+      const id = batchedMesh.addInstance( geometryId );
 
-        const matrix = new THREE.Matrix4();
+      const matrix = new THREE.Matrix4();
 
-        matrix.premultiply(new THREE.Matrix4().makeTranslation(...parent.position.toArray()));
+      matrix.premultiply(new THREE.Matrix4().makeTranslation(...parent.position.toArray()));
 
-        batchedMesh.setMatrixAt ( id, matrix );
+      batchedMesh.setMatrixAt( id, matrix );
 
-        batchedMesh.setColorAt  ( id, new THREE.Color( Math.random() * 0xffffff ) )
+      batchedMesh.setColorAt ( id, new THREE.Color( Math.random() * 0xffffff ) )
 
-        batchedMesh.setVisibleAt( id, visiblity ) 
+      prevAfterMeshCreation(node,batchedMesh,payload)
 
-        prevAfterMeshCreation(node,batchedMesh,payload)
-
-    } 
+    }) 
 
   }
 
@@ -313,6 +278,6 @@ export class Sphere extends Cube{
   static __type = 'Sphere'
   constructor(params){
     super(params) 
-    this.architecture.config.radius = params.radius
+    this.levelArchitecture.config.radius = params.radius
   }
 }

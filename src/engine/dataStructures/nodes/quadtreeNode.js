@@ -1,10 +1,8 @@
-import * as _THREE from 'three'
-import * as TSL from 'three/tsl'
-import * as WG from 'three/webgpu'
+import * as THREE from 'three'
 import { Node } from './baseNode.js' 
-import { project, createLocations, generateKey  } from '../../utils.js'
+import { project, createLocations, generateKey,cordinate   } from '../../utils/boundingBoxUtils.js'
 
-const THREE = {..._THREE,...TSL,...WG}
+
 
 
 export class QuadTreeNode extends THREE.Object3D{
@@ -18,7 +16,7 @@ export class QuadTreeNode extends THREE.Object3D{
     }
 
     add(mesh){
-        if (mesh instanceof QuadTreeMeshNode){ this.#_meshNode = mesh}
+        if (( mesh instanceof QuadTreeMeshNode )){ this.#_meshNode = mesh}
         else if (mesh instanceof QuadTreeSpatialNode) {this.#_spatialNode = mesh}
         super.add(mesh)
         return this
@@ -107,39 +105,8 @@ export class QuadTreeNode extends THREE.Object3D{
 export class QuadTreeMeshNode extends Node{ 
     constructor(params,state = 'active'){ 
         super(params,state)
-
-        this.batchingData = {
-            instanceId:  null,
-            geometryId:  null,
-            batchedMesh: null
-        }
-
-      }
-
-      setBatchedMesh(batchedMesh){
-        this.batchingData.batchedMesh = batchedMesh
-      }
-
-      setInstanceId(instanceId){
-        this.batchingData.instanceId = instanceId
-      }
-
-      setGeometryId(geometryId){
-        this.batchingData.geometryId = geometryId
-      }
-
-      showMesh(){
-
-        super.showMesh()
-
-        //const visiblity = this.mesh().material.visible
-
-        //batchedMesh.setVisibleAt( this.batchingData.instanceId , visiblity ) 
-
       }
 }
-
-
 
 
 export class QuadTreeSpatialNode extends Node{
@@ -195,7 +162,7 @@ export class QuadTreeSpatialNode extends Node{
         
         if(this.normalize){
             
-            let radius =  this.params.architecture.config.radius
+            let radius =  this.params.levelArchitecture.config.radius
             
             points.forEach((e,i)=>{
 
@@ -270,7 +237,7 @@ export class QuadTreeSpatialNode extends Node{
 
         let axis  = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
 
-        let resolution = primitive.architecture.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
+        let resolution = primitive.levelArchitecture.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
          
         size = ( size / 2 )
 
@@ -282,3 +249,4 @@ export class QuadTreeSpatialNode extends Node{
 }
 
 
+ 

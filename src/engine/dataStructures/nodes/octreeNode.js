@@ -1,9 +1,7 @@
-import * as _THREE from 'three'
-import * as TSL from 'three/tsl'
-import * as WG from 'three/webgpu'
+import * as THREE from 'three'
+ 
 import { Node } from './baseNode.js'
-const THREE = {..._THREE,...TSL,...WG}
-
+ 
 
 export class OctreeNode extends Node{
     constructor(bounds, minNodeSize) {

@@ -1,10 +1,16 @@
-import * as _THREE from 'three'
-import * as TSL from 'three/tsl'
-import * as WG from 'three/webgpu'
+import * as THREE from 'three'
+ 
 
-const THREE = {..._THREE,...TSL,...WG}
+export const setDefaultEvents = () =>{
+ return [
+  {name: "afterMeshNodeCreation",    fn: (node) => undefined },
+  {name: "afterSpatialNodeCreation", fn: (node) => undefined },
+  {name: "afterMeshCreation",        fn: (node, payload) => undefined },
+  {name: "setTextures",              fn: () => undefined },
+ ]
+}
 
-export class Architecture {
+export class LevelArchitecture {
 
   constructor(config = {}) {
     let shardedData = {
@@ -17,15 +23,13 @@ export class Architecture {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
-      material: new THREE.MeshBasicMaterial({ color: new THREE.Color( 0xffffff )}),
-      callBacks:{
-        afterMeshNodeCreation:    (node) => undefined,
-        afterSpatialNodeCreation: (node) => undefined,
-        afterMeshCreation:        (node,payload) => undefined,
-        setTextures:              (  ) => undefined,
-      },
+      material: new THREE.MeshStandardMaterial({ color: new THREE.Color( Math.random()*0xffffff )}),
      }
     this.config = Object.assign( shardedData, config )
+    this.eventHandlers = new Map();
+    setDefaultEvents().forEach(event=>{
+      this.on(event.name,event.fn)
+    })
   }
 
   levels(numOflvls) {
@@ -85,7 +89,13 @@ export class Architecture {
     }
   } 
 
-  setCallBacks(callBacks){
-    this.config.callBacks = Object.assign(this.config.callBacks,callBacks) 
+  on(event, handler) {
+    this.eventHandlers.set(event, handler);
+  }
+
+  trigger(event) {
+    if (this.eventHandlers.has(event)) {
+      return this.eventHandlers.get(event) 
+    }
   }
 }

@@ -1,5 +1,5 @@
  
-import { isWithinBounds } from '../utils.js'
+import { isWithinBounds } from '../utils/boundingBoxUtils.js'
  
 export class QuadTree {
 
