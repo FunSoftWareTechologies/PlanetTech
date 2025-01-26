@@ -2,13 +2,13 @@
 import * as THREE from 'three'
 import { QuadTree } from './dataStructures/quadtree.js'
 import { geometrySelector } from './geometry.js'
-import { workersSRC } from './threading/sorce.js'
+import { workersSRC } from './threading/source.js'
 import { QuadTreeNode,QuadTreeMeshNode,QuadTreeSpatialNode } from './dataStructures/nodes/quadtreeNode.js'
 import { LevelArchitecture  } from './levelArchitecture.js'
 import { bufferInit,geometryInit,meshInit } from './utils/geometryUtils.js'
 import { threadingInit } from './utils/threadingUtils.js'
-import { isSphere,whichDimensionFn,createCallBackPayload } from './utils/primitiveUtils.js'
-
+import { isSphere,whichDimensionFn } from './utils/primitiveUtils.js'
+import { setTextures } from './utils/textureUtils.js'
 
 
 export class Primitive extends THREE.Object3D {
@@ -26,7 +26,7 @@ export class Primitive extends THREE.Object3D {
 
     this.levelArchitecture   = new LevelArchitecture();
 
-    this._createMeshNodes = () => {}
+    this._createMeshNodes    = () => {}
   }
 
 
@@ -68,6 +68,8 @@ export class Primitive extends THREE.Object3D {
     const { material } = this.levelArchitecture.config;
 
     const { buffers, views } = bufferInit(this.levelArchitecture.config.arrybuffers[size].geometryData, geometryClass);
+
+    const srcs = this.levelArchitecture.triggerValue('loadTexture')
  
     const threadarchitecture  = threadingInit(geometryClass, workersSRC);
     threadarchitecture.setPayload({
@@ -78,7 +80,7 @@ export class Primitive extends THREE.Object3D {
       resolution,
       ...buffers,
       ...additionalPayload,
-      ...this.levelArchitecture.trigger('setTextures')(),
+      //...this.levelArchitecture.triggerValue('setTextures'),
     });
 
     return new Promise((resolve) => {
@@ -88,16 +90,25 @@ export class Primitive extends THREE.Object3D {
  
         const mesh = meshInit(geometry, material, payload.data.centerdPosition);
         mesh.position.copy(meshNode.position.clone().negate())
-        meshNode.add(mesh)
 
-        const callBackPayload = createCallBackPayload({
-          meshNode,
-          imageBitmap: payload.data.imageBitmapResult
-        })
+        if(srcs && Object.values(srcs).length !== 0){
+
+          setTextures({
+            meshNode,
+            mesh,
+            srcs,
+            levelArchitecture:this.levelArchitecture,
+            promiseResolve:resolve,
+          })
+          
+        }else{
+
+          meshNode.add(mesh)
+          this.levelArchitecture.trigger('afterMeshCreation',meshNode,callBackPayload) 
+          resolve(meshNode);
+
+        }
  
-      
-        this.levelArchitecture.trigger('afterMeshCreation')(meshNode,callBackPayload)
-        resolve(meshNode);
       });
     });
   }
@@ -131,7 +142,7 @@ export class Primitive extends THREE.Object3D {
 
     quadTreeNode.getSpatialNode().generateKey()
     
-    this.levelArchitecture.trigger('afterSpatialNodeCreation')(quadTreeNode.getSpatialNode())
+    this.levelArchitecture.trigger('afterSpatialNodeCreation',quadTreeNode.getSpatialNode()) 
     
    return quadTreeNode.getSpatialNode();
   }
@@ -171,7 +182,8 @@ export class Primitive extends THREE.Object3D {
   }
 }
 
-
+//class not ready 
+/*
 export class BatchedPrimitive extends Primitive{
   static __type = 'BatchedPrimitive'
 
@@ -211,8 +223,6 @@ export class BatchedPrimitive extends Primitive{
 
     let polyPerLevel = this.levelArchitecture.config.levels.polyPerLevel
 
-    let prevAfterMeshCreation = this.levelArchitecture.trigger('afterMeshCreation')  
-
     this.levelArchitecture.on('afterMeshCreation', ( node, payload ) => {
  
       const parent = node.parent;
@@ -251,13 +261,11 @@ export class BatchedPrimitive extends Primitive{
 
       batchedMesh.setColorAt ( id, new THREE.Color( Math.random() * 0xffffff ) )
 
-      prevAfterMeshCreation(node,batchedMesh,payload)
-
     }) 
 
   }
 
-}
+}*/
 
 
 export class Quad  extends Primitive{

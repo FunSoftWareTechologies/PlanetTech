@@ -2,7 +2,7 @@
 import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
 //https://sbedit.net/f06b5aef06fb48c2777501f643dfa21f765c9485#L273-L281
 
-export class PhysicsEngine {
+export class Physics {
 
     constructor(gravity){ 
         
@@ -18,7 +18,7 @@ export class PhysicsEngine {
 }
 
 
-export class PlanetaryPhysics{
+export class PrimitiveMechanics{
 
     constructor( physicsEngine ){
 
@@ -27,7 +27,7 @@ export class PlanetaryPhysics{
      }
 
 
-     setRigidBody( node ){ 
+     setPrimitiveRigidBody( node ){ 
 
         return this.physicsEngine.world.then(world=>{
            

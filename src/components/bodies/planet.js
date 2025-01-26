@@ -4,33 +4,41 @@ import { Sphere } from '../../engine/primitives.js'
 
 
 export class Planet extends CelestialBody{
+    static __type = 'Planet'
 
     constructor(params){
         super(params)
+     }
+
+ 
+    initSphere( primitiveData ){
+
+        this.primitive = new Sphere(primitiveData)
+    
+        this.primitive.levelArchitecture.config.lodDistanceOffset = primitiveData.offset 
+        
+        this.primitive.createQuadTree({levels:primitiveData.levels})
+      
+        this.primitive.createMeshNodes()
+
+    }
+
+
+    setEvents(name, eventHandlers){
+
+        if( Array.isArray(eventHandlers) ){ 
+            eventHandlers.forEach(fn => { this.primitive.levelArchitecture.on(name,fn)  });
+        }else{
+            this.primitive.levelArchitecture.onValue( name, eventHandlers)
+        }
+
     }
 
  
-    createSphere( primitiveData, eventHandlers ){
+    create(){
 
-        let primitive = new Sphere(primitiveData)
-    
-        primitive.levelArchitecture.config.lodDistanceOffset = primitiveData.offset 
-          
-        eventHandlers.forEach(fn => {
-
-            primitive.levelArchitecture.on(fn.name,fn) 
-
-        });
-        
-
-        primitive.createQuadTree({levels:primitiveData.levels})
+        this.primitive.createDimensions()
       
-        primitive.createMeshNodes()
-      
-        primitive.createDimensions()
-      
-        this.primitive = primitive
-
         this.add(this.primitive)
 
     }

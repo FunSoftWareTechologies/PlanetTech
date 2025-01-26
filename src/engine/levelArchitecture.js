@@ -6,9 +6,41 @@ export const setDefaultEvents = () =>{
   {name: "afterMeshNodeCreation",    fn: (node) => undefined },
   {name: "afterSpatialNodeCreation", fn: (node) => undefined },
   {name: "afterMeshCreation",        fn: (node, payload) => undefined },
-  {name: "setTextures",              fn: () => undefined },
  ]
 }
+
+export class EventManager {
+  constructor() {
+    this.eventHandlers = new Map(); 
+    this.valueCallbacks = new Map(); 
+  }
+
+  on(event, handler) {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
+    }
+    this.eventHandlers.get(event).push(handler);
+  }
+
+  onValue(event, handler) {
+    this.valueCallbacks.set(event, handler);
+  }
+
+  trigger(event, ...args) {
+    if (this.eventHandlers.has(event)) {
+      this.eventHandlers.get(event).forEach((handler) => handler(...args));
+    }
+  }
+
+  triggerValue(event, ...args) {
+    if (this.valueCallbacks.has(event)) {
+      return this.valueCallbacks.get(event)(...args);
+    }
+    return undefined;
+  }
+}
+
+
 
 export class LevelArchitecture {
 
@@ -26,10 +58,12 @@ export class LevelArchitecture {
       material: new THREE.MeshStandardMaterial({ color: new THREE.Color( Math.random()*0xffffff )}),
      }
     this.config = Object.assign( shardedData, config )
-    this.eventHandlers = new Map();
-    setDefaultEvents().forEach(event=>{
-      this.on(event.name,event.fn)
-    })
+
+    this.events = new EventManager();
+
+    setDefaultEvents().forEach((event) => {
+      this.events.on(event.name, event.fn);
+    });
   }
 
   levels(numOflvls) {
@@ -90,12 +124,18 @@ export class LevelArchitecture {
   } 
 
   on(event, handler) {
-    this.eventHandlers.set(event, handler);
+    this.events.on(event, handler);
   }
 
-  trigger(event) {
-    if (this.eventHandlers.has(event)) {
-      return this.eventHandlers.get(event) 
-    }
+  onValue(event, handler) {
+    this.events.onValue(event, handler);
+  }
+
+  trigger(event, ...args) {
+    this.events.trigger(event, ...args);
+  }
+
+  triggerValue(event, ...args) {
+    return this.events.triggerValue(event, ...args);
   }
 }

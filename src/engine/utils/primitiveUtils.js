@@ -1,4 +1,3 @@
-import { createUVObject,createTexture } from "./textureUtils.js"
 
 
 export const initializationData = (i_, j_, k) =>{
@@ -51,10 +50,3 @@ export const whichDimensionFn  = (primitive) => {
   }
 
 }
-
-export const createCallBackPayload = (params) => {
-    const { meshNode, imageBitmap } = params;
-    const uv = createUVObject().update(meshNode);
-    const map = createTexture(imageBitmap);
-    return { uv, map };
-  };

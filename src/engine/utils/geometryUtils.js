@@ -3,17 +3,17 @@ import { NormalizedQuadGeometry } from './../geometry.js';
  
 
 export const bufferInit = (geometryData, geometryClass) => {
-  const sharedArrayUv = new SharedArrayBuffer(geometryData.byteLengthUv);
-  const sharedArrayIndex = new SharedArrayBuffer(geometryData.byteLengthIndex);
+  const sharedArrayUv       = new SharedArrayBuffer(geometryData.byteLengthUv);
+  const sharedArrayIndex    = new SharedArrayBuffer(geometryData.byteLengthIndex);
   const sharedArrayPosition = new SharedArrayBuffer(geometryData.byteLengthPosition);
-  const sharedArrayNormal = new SharedArrayBuffer(geometryData.byteLengthNormal);
-  const sharedArrayDirVect = geometryClass === NormalizedQuadGeometry ? new SharedArrayBuffer(geometryData.byteLengthNormal) : null;
+  const sharedArrayNormal   = new SharedArrayBuffer(geometryData.byteLengthNormal);
+  const sharedArrayDirVect  = geometryClass === NormalizedQuadGeometry ? new SharedArrayBuffer(geometryData.byteLengthNormal) : null;
 
   const positionBuffer = new Float32Array(sharedArrayPosition);
-  const normalBuffer = new Float32Array(sharedArrayNormal);
-  const uvBuffer = new Float32Array(sharedArrayUv);
-  const indexBuffer = new Uint32Array(sharedArrayIndex);
-  const dirVectBuffer = sharedArrayDirVect ? new Float32Array(sharedArrayDirVect) : null;
+  const normalBuffer   = new Float32Array(sharedArrayNormal);
+  const uvBuffer       = new Float32Array(sharedArrayUv);
+  const indexBuffer    = new Uint32Array(sharedArrayIndex);
+ //const dirVectBuffer = sharedArrayDirVect ? new Float32Array(sharedArrayDirVect) : null;
 
   return {
     buffers: {
@@ -28,7 +28,7 @@ export const bufferInit = (geometryData, geometryClass) => {
       normalBuffer,
       uvBuffer,
       indexBuffer,
-      dirVectBuffer,
+      //dirVectBuffer,
     },
   };
 };
@@ -43,9 +43,7 @@ export const geometryInit = (params) => {
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(views.normalBuffer, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(views.uvBuffer, 2));
 
-  if (views.dirVectBuffer) {
-    geometry.setAttribute('directionVectors', new THREE.Float32BufferAttribute(views.dirVectBuffer, 3));
-  }
+  //`if (views.dirVectBuffer) { geometry.setAttribute('directionVectors', new THREE.Float32BufferAttribute(views.dirVectBuffer, 3))}
 
   return geometry;
 };

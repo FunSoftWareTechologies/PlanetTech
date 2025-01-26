@@ -58,7 +58,7 @@ export function workersSRC(currentGeometry,params){
         const normalBuffer   = new Float32Array(payload.sharedArrayNormal   );
         const uvBuffer       = new Float32Array(payload.sharedArrayUv       );
         const indexBuffer    = new Uint32Array (payload.sharedArrayIndex    );
-        const dirVectBuffer  = (payload.sharedArrayDirVect === undefined) ? undefined : new Float32Array(payload.sharedArrayDirVect  );
+        //const dirVectBuffer  = (payload.sharedArrayDirVect === undefined) ? undefined : new Float32Array(payload.sharedArrayDirVect  );
 
         let geometry = new ${currentGeometry}( payload.size, payload.size, payload.resolution, payload.resolution, payload.radius)
 
@@ -73,7 +73,7 @@ export function workersSRC(currentGeometry,params){
             normalBuffer,
             uvBuffer,
             indexBuffer,
-            dirVectBuffer
+            //dirVectBuffer
         })
 
         let centerdPosition = new THREE.Vector3()
@@ -82,9 +82,9 @@ export function workersSRC(currentGeometry,params){
 
         //positionBuffer.set(geometry.attributes.position.array)
 
-        geometry.computeVertexNormals()
+        //geometry.computeVertexNormals()
 
-        normalBuffer.set(geometry.attributes.normal.array)
+        //normalBuffer.set(geometry.attributes.normal.array)
 
         return{
             centerdPosition:centerdPosition.toArray(),

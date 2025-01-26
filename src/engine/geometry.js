@@ -294,7 +294,7 @@ export class NormalizedQuadGeometry extends QuadGeometry {
 			this.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
 			this.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 			this.setAttribute( 'uv', new THREE.Float32BufferAttribute( uvs, 2 ) );
-			this.setAttribute( 'directionVectors', new THREE.Float32BufferAttribute( directionVectors, 3 ) );
+			//this.setAttribute( 'directionVectors', new THREE.Float32BufferAttribute( directionVectors, 3 ) );
 
     }
 
@@ -347,18 +347,19 @@ export class NormalizedQuadGeometry extends QuadGeometry {
 				buffers.positionBuffer[vertexIndex++] = _W.y;
 				buffers.positionBuffer[vertexIndex++] = _W.z;
 
-				// Add normal (static in this case)
-				buffers.normalBuffer[normalIndex++] = 0;
-				buffers.normalBuffer[normalIndex++] = 0;
-				buffers.normalBuffer[normalIndex++] = 1;
+				// Add normal (static in this case)  //todo
+				buffers.normalBuffer[normalIndex++] = _D.x;
+				buffers.normalBuffer[normalIndex++] = _D.y;
+				buffers.normalBuffer[normalIndex++] = _D.z;
 
-				// Add UV coordinates
+				// Add UV coordinates  
 				buffers.uvBuffer[uvIndex++] = ix / gridX;
 				buffers.uvBuffer[uvIndex++] = 1 - iy / gridY;
 
-				buffers.dirVectBuffer[dirVectIndex++] = _D.x;
-				buffers.dirVectBuffer[dirVectIndex++] = _D.y;
-				buffers.dirVectBuffer[dirVectIndex++] = _D.z;
+				//todo
+				//buffers.dirVectBuffer[dirVectIndex++] = _D.x;
+				//buffers.dirVectBuffer[dirVectIndex++] = _D.y;
+				//buffers.dirVectBuffer[dirVectIndex++] = _D.z;
 			}
 		}
 
@@ -387,7 +388,7 @@ export class NormalizedQuadGeometry extends QuadGeometry {
 		this.setAttribute( 'position', new THREE.Float32BufferAttribute( buffers.positionBuffer , 3 ) );
 		this.setAttribute( 'normal', new THREE.Float32BufferAttribute(  buffers.normalBuffer , 3 ) );
 		this.setAttribute( 'uv', new THREE.Float32BufferAttribute(  buffers.uvBuffer, 2 ) );
-		this.setAttribute( 'directionVectors', new THREE.Float32BufferAttribute( buffers.dirVectBuffer , 3 ) );
+		//this.setAttribute( 'directionVectors', new THREE.Float32BufferAttribute( buffers.dirVectBuffer , 3 ) );
 	}
 
 
