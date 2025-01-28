@@ -8,7 +8,7 @@ import { LevelArchitecture  } from './levelArchitecture.js'
 import { bufferInit,geometryInit,meshInit } from './utils/geometryUtils.js'
 import { threadingInit } from './utils/threadingUtils.js'
 import { isSphere,whichDimensionFn } from './utils/primitiveUtils.js'
-import { setTextures } from './utils/textureUtils.js'
+import { setTextures,createUVObject } from './utils/textureUtils.js'
 
 
 export class Primitive extends THREE.Object3D {
@@ -104,7 +104,7 @@ export class Primitive extends THREE.Object3D {
         }else{
 
           meshNode.add(mesh)
-          this.levelArchitecture.trigger('afterMeshCreation',meshNode,callBackPayload) 
+          this.levelArchitecture.trigger('afterMeshCreation',meshNode,{uv:createUVObject().update(meshNode)}) 
           resolve(meshNode);
 
         }

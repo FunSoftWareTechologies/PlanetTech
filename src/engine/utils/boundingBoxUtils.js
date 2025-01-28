@@ -10,6 +10,7 @@ export const project = (normalizedCenter, radius, center) => {
   W.copy(normalizedCenter);
   normalizedCenter.multiplyScalar(radius);
   normalizedCenter.add(center).add(W);
+  return normalizedCenter
 };
 
 export const createLocations = (size, offset, axis) => {
@@ -56,7 +57,7 @@ export const createLocations = (size, offset, axis) => {
   return { points, averages };
 };
 
-export const cordinate = (idx) => ['NE', 'NW', 'SE', 'SW'][idx];
+export const coordinate = (idx) => ['NE', 'NW', 'SE', 'SW'][idx];
 
 export const isWithinBounds = (distance, primitive, size) => {
   return distance < primitive.levelArchitecture.config.lodDistanceOffset * size && size > primitive.levelArchitecture.config.minLevelSize;

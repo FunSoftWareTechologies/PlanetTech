@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { Node } from './baseNode.js' 
-import { project, createLocations, generateKey,cordinate   } from '../../utils/boundingBoxUtils.js'
+import { project, createLocations, generateKey,coordinate} from '../../utils/boundingBoxUtils.js'
 
 
 
@@ -51,7 +51,7 @@ export class QuadTreeNode extends THREE.Object3D{
 
         points.forEach((location,idx) => {
 
-            index = `${index} -> ${cordinate(idx)}`
+            index = `${index} -> ${coordinate(idx)}`
 
             let quadTreeNode = primitive.createQuadTreeNode({ matrixRotationData, offset:location, index, direction, initializationData:{ size, resolution, depth }})
 

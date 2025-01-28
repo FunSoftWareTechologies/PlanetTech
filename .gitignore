@@ -9,7 +9,7 @@
 /public/planet
 /public
 /package/node_modules
-/test
+
 /testPackage
 babel.config.js
 
