@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import {CelestialBody} from './celestialBody.js' 
-import { Sphere } from '../../engine/primitives.js'
+import { Sphere } from '../../engine/primitives/sphere.js'
 
 
 export class Planet extends CelestialBody{
@@ -26,11 +26,7 @@ export class Planet extends CelestialBody{
 
     setEvents(name, eventHandlers){
 
-        if( Array.isArray(eventHandlers) ){ 
-            eventHandlers.forEach(fn => { this.primitive.levelArchitecture.on(name,fn)  });
-        }else{
-            this.primitive.levelArchitecture.onValue( name, eventHandlers)
-        }
+        eventHandlers.forEach(fn => { this.primitive.levelArchitecture.events.on(name,fn)  });
 
     }
 

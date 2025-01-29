@@ -1,5 +1,6 @@
 import * as THREE from 'three'
- 
+import * as THREEWGPU from 'three/webgpu'
+import { EventManager } from './eventManager.js'
 
 export const setDefaultEvents = () =>{
  return [
@@ -8,38 +9,6 @@ export const setDefaultEvents = () =>{
   {name: "afterMeshCreation",        fn: (node, payload) => undefined },
  ]
 }
-
-export class EventManager {
-  constructor() {
-    this.eventHandlers = new Map(); 
-    this.valueCallbacks = new Map(); 
-  }
-
-  on(event, handler) {
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, []);
-    }
-    this.eventHandlers.get(event).push(handler);
-  }
-
-  onValue(event, handler) {
-    this.valueCallbacks.set(event, handler);
-  }
-
-  trigger(event, ...args) {
-    if (this.eventHandlers.has(event)) {
-      this.eventHandlers.get(event).forEach((handler) => handler(...args));
-    }
-  }
-
-  triggerValue(event, ...args) {
-    if (this.valueCallbacks.has(event)) {
-      return this.valueCallbacks.get(event)(...args);
-    }
-    return undefined;
-  }
-}
-
 
 
 export class LevelArchitecture {
@@ -55,7 +24,7 @@ export class LevelArchitecture {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
-      material: new THREE.MeshStandardMaterial({ color: new THREE.Color( Math.random()*0xffffff )}),
+      material: new THREEWGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff )}),
      }
     this.config = Object.assign( shardedData, config )
 
@@ -122,20 +91,4 @@ export class LevelArchitecture {
       }
     }
   } 
-
-  on(event, handler) {
-    this.events.on(event, handler);
-  }
-
-  onValue(event, handler) {
-    this.events.onValue(event, handler);
-  }
-
-  trigger(event, ...args) {
-    this.events.trigger(event, ...args);
-  }
-
-  triggerValue(event, ...args) {
-    return this.events.triggerValue(event, ...args);
-  }
 }

@@ -1,5 +1,5 @@
-import { ThreadController } from './../threading/controller.js';
-import { QuadGeometry } from './../geometry.js';
+import { ThreadController } from '../system/threading/controller.js';
+import { QuadGeometry } from '../geometries/geometry.js';
 
 export const threadingInit = (geometryClass, workersSRC) => {
   const blob = new Blob(

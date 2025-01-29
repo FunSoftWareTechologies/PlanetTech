@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { NormalizedQuadGeometry } from './../geometry.js';
+import { NormalizedQuadGeometry } from '../geometries/geometry.js';
  
 
 export const bufferInit = (geometryData, geometryClass) => {

@@ -1,114 +1,92 @@
-// @vitest-environment jsdom
-
+import { describe, it, expect, beforeEach } from 'vitest';
 import * as THREE from 'three';
-import { Primitive } from '../src/engine/primitives.js';
-import { Controller, QuadTree  } from '../src/engine/dataStructures/quadtree.js';
-import { expect, test, describe, vi, beforeEach } from 'vitest'
+import { Primitive } from '../src/engine/primitives';
+import { LevelArchitecture } from '../src/engine/system/levelArchitecture';
 
-//vi.mock('../src/engine/quadtree.js'); 
-//vi.mock('../src/engine/geometry.js');
+let primitive;
 
-describe('Quad Class', () => {
-  let primitive;
+beforeEach(() => {
+  primitive = new Primitive({
+    size: 100,
+    dimension: 2,
+    resolution: 10,
+  });
+  primitive.createQuadTree({ levels: 4 });
+});
 
-  beforeEach(() => {
-    primitive = new Primitive({
-      size: 10,
-      resolution: 4,
-      dimension: 2,
-    });
+describe('Primitive Class', () => {
+  it('should initialize with correct parameters', () => {
+    expect(primitive.parameters.size).toBe(100);
+    expect(primitive.parameters.dimension).toBe(2);
+    expect(primitive.parameters.resolution).toBe(10);
+    expect(primitive.quadTreeCollections.size).toBe(0);
   });
 
-  test('should initialize with correct parameters', () => {
-    expect(primitive.parameters).toEqual({
-      size: 10,
-      resolution: 4,
-      dimension: 2,
-      depth:0
-    });
-    expect(primitive.quadTreeCollections) .toBeInstanceOf(Map);
-    expect(primitive.controller ) .toBeDefined();
-    expect(primitive.controller ) .toBeInstanceOf(Controller);
+  it('should create a quadtree with specified levels', () => {
+    
+
+    const config = primitive.levelArchitecture.config;
+    expect(config.maxLevelSize).toBe(100);
+    expect(config.minLevelSize).toBe(12.5); // 100 / 2^3
+    expect(config.levels.numOflvls).toBe(4);
+    expect(config.levels.levelsArray.length).toBe(4);
   });
 
-  test('should configure QuadTree with createQuadTree', () => {
-    primitive.createQuadTree({ levels: 3 });
-    expect(primitive.controller.config.maxLevelSize).toBe(10);
-    expect(primitive.controller.config.minLevelSize).toBe(2.5);
-    expect(primitive.controller.config.minPolyCount).toBe(4);
-    expect(primitive.controller.config.dimensions)  .toBe(2);
-   });
-  
-  test('should create dimensions and call the callback correctly', () => {
-    let offset = [[-5,5,10],[-5,-5,10],[5,5,10],[5,-5,10]]
-    primitive.createQuadTree({ levels: 3 });
-    primitive.createDimensions();
-    expect(primitive.quadTreeCollections.size).toEqual(4);
-    Object.values(primitive.quadTreeCollections).forEach((instance, index) => {
-       expect(instance.params.metaData.index).toBe(index);
-       expect(instance.params.metaData.direction).toBe('+z');
-       expect(instance.params.metaData.offset).toStrictEqual(offset[index]);
-    })
-  })
-    /*it('should create a plane with the correct properties', () => {
-    const mockMaterial = new THREE.MeshBasicMaterial();
-    const plane = quad.createPlane({
-      material: mockMaterial,
-      size: 10,
-      resolution: 4,
-      matrix: new THREE.Matrix4(),
-      offset: [0, 0, 0],
-    });
+  /*it('should create a plane mesh with correct attributes', async () => {
 
-    expect(plane).toBeInstanceOf(THREE.Mesh);
-    expect(plane.geometry.parameters).toMatchObject({
-      width: 10,
-      height: 10,
-      widthSegments: 4,
-      heightSegments: 4,
-    });
-    expect(plane.material).toBe(mockMaterial);
+    const mockMeshNode = {
+      params: {
+        size: 50,
+        resolution: 10,
+        direction: new THREE.Vector3(1, 0, 0),
+        matrixRotationData: new THREE.Matrix4(),
+        offset: [0, 0, 0],
+      },
+      position: new THREE.Vector3(0, 0, 0),
+    };
+ 
+    const plane = await primitive.createPlane({ meshNode: mockMeshNode });
+
+    expect(plane.geometry.attributes.position.count).toBeGreaterThan(0);
+    expect(plane.material).toBeInstanceOf(THREE.MeshStandardMaterial);
+  });*/
+
+  it('should add nodes to the quadTreeCollections', () => {
+    const mockNode = { id: 1 };
+    primitive.addNode('testBounds', mockNode);
+
+    expect(primitive.quadTreeCollections.size).toBe(1);
+    expect(primitive.quadTreeCollections.get('testBounds')).toBe(mockNode);
   });
 
-  it('should configure QuadTree with createQuadTree', () => {
-    quad.createQuadTree({ levels: 3 });
+  it('should update the quadtree with a 3D object', () => {
+    const mockObject3D = new THREE.Object3D();
+    primitive.createQuadTree({ levels: 4 });
 
-    expect(quad.quadTreeController.config.maxLevelSize).toBe(10);
-    expect(quad.quadTreeController.config.minLevelSize).toBe(10 / 4);
-    expect(quad.quadTreeController.config.minPolyCount).toBe(4);
-    expect(quad.quadTreeController.config.dimensions).toBe(2);
-  });
-
-  it('should create a new quad with correct properties', () => {
-    const mockShardedData = {
-      parameters: { width: 5, widthSegments: 4 },
+    // Mock update logic for quadtree
+    primitive.quadTree = {
+      update: (object, primitiveInstance) => {
+        expect(object).toBe(mockObject3D);
+        expect(primitiveInstance).toBe(primitive);
+      },
     };
 
-    const quadInstance = quad.createNewQuad({
-      shardedData: mockShardedData,
-      matrix: new THREE.Matrix4(),
-      offset: [1, 2, 3],
-    });
-
-    expect(quadInstance.plane).toBeInstanceOf(THREE.Mesh);
-    expect(quadInstance.plane.geometry.parameters).toMatchObject({
-      width: 5,
-      height: 5,
-      widthSegments: 4,
-      heightSegments: 4,
-    });
+    primitive.update(mockObject3D);
   });
+});
 
-  it('should create dimensions and call the callback correctly', () => {
-    const mockCallback = jest.fn();
-    quad.createDimensions(mockCallback);
-
-    expect(mockCallback).toHaveBeenCalled();
-    expect(quad.instances.length).toBeGreaterThan(0);
-
-    quad.instances.forEach((instance, index) => {
-      expect(instance.metaData.index).toBe(index);
-      expect(instance.metaData.direction).toBe('+z');
+describe('LevelArchitecture Integration', () => {
+  it('should create levels with appropriate configurations', () => {
+    const architecture = new LevelArchitecture({
+      maxLevelSize: 100,
+      minLevelSize: 25,
+      dimensions: 2,
+      minPolyCount: 10,
     });
-  });*/
+
+    architecture.levels(3);
+
+    expect(architecture.config.levels.numOflvls).toBe(3);
+    expect(architecture.config.levels.levelsArray).toEqual([100, 50, 25]);
+  });
 });

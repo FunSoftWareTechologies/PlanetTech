@@ -1,14 +1,14 @@
  
 import * as THREE from 'three'
-import { QuadTree } from './dataStructures/quadtree.js'
-import { geometrySelector } from './geometry.js'
-import { workersSRC } from './threading/source.js'
-import { QuadTreeNode,QuadTreeMeshNode,QuadTreeSpatialNode } from './dataStructures/nodes/quadtreeNode.js'
-import { LevelArchitecture  } from './levelArchitecture.js'
-import { bufferInit,geometryInit,meshInit } from './utils/geometryUtils.js'
-import { threadingInit } from './utils/threadingUtils.js'
-import { isSphere,whichDimensionFn } from './utils/primitiveUtils.js'
-import { setTextures,createUVObject } from './utils/textureUtils.js'
+import { QuadTree } from './../dataStructures/quadtree.js'
+import { geometrySelector } from '../geometries/geometry.js'
+import { workersSRC } from '../system/threading/source.js'
+import { QuadTreeNode,QuadTreeMeshNode,QuadTreeSpatialNode } from './../dataStructures/nodes/quadtreeNode.js'
+import { LevelArchitecture  } from './../system/levelArchitecture.js'
+import { bufferInit,geometryInit,meshInit } from './../utils/geometryUtils.js'
+import { threadingInit } from './../utils/threadingUtils.js'
+import { isSphere,whichDimensionFn } from './../utils/primitiveUtils.js'
+import { setTextures,createUVObject } from './../utils/textureUtils.js'
 
 
 export class Primitive extends THREE.Object3D {
@@ -68,8 +68,10 @@ export class Primitive extends THREE.Object3D {
     const { material } = this.levelArchitecture.config;
 
     const { buffers, views } = bufferInit(this.levelArchitecture.config.arrybuffers[size].geometryData, geometryClass);
+    
+    const textureObj = {textureSrc:{},uv:createUVObject().update(meshNode)}
 
-    const srcs = this.levelArchitecture.triggerValue('loadTexture')
+    this.levelArchitecture.events.trigger('loadTexture',textureObj)
  
     const threadarchitecture  = threadingInit(geometryClass, workersSRC);
     threadarchitecture.setPayload({
@@ -78,9 +80,10 @@ export class Primitive extends THREE.Object3D {
       offset,
       size,
       resolution,
+      UV:{offset:textureObj.uv.getOffset(),scale:textureObj.uv.getScale()},
       ...buffers,
       ...additionalPayload,
-      //...this.levelArchitecture.triggerValue('setTextures'),
+      //...this.levelArchitecture.events.trigger('setTextures'),
     });
 
     return new Promise((resolve) => {
@@ -91,12 +94,12 @@ export class Primitive extends THREE.Object3D {
         const mesh = meshInit(geometry, material, payload.data.centerdPosition);
         mesh.position.copy(meshNode.position.clone().negate())
 
-        if(srcs && Object.values(srcs).length !== 0){
+        if( Object.values(textureObj.textureSrc).length !== 0){
 
           setTextures({
             meshNode,
             mesh,
-            srcs,
+            srcs:textureObj.textureSrc,
             levelArchitecture:this.levelArchitecture,
             promiseResolve:resolve,
           })
@@ -104,7 +107,7 @@ export class Primitive extends THREE.Object3D {
         }else{
 
           meshNode.add(mesh)
-          this.levelArchitecture.trigger('afterMeshCreation',meshNode,{uv:createUVObject().update(meshNode)}) 
+          this.levelArchitecture.events.trigger('afterMeshCreation',meshNode,{uv:createUVObject().update(meshNode)}) 
           resolve(meshNode);
 
         }
@@ -142,7 +145,7 @@ export class Primitive extends THREE.Object3D {
 
     quadTreeNode.getSpatialNode().generateKey()
     
-    this.levelArchitecture.trigger('afterSpatialNodeCreation',quadTreeNode.getSpatialNode()) 
+    this.levelArchitecture.events.trigger('afterSpatialNodeCreation',quadTreeNode.getSpatialNode()) 
     
    return quadTreeNode.getSpatialNode();
   }
@@ -182,110 +185,7 @@ export class Primitive extends THREE.Object3D {
   }
 }
 
-//class not ready 
-/*
-export class BatchedPrimitive extends Primitive{
-  static __type = 'BatchedPrimitive'
 
-  constructor(primitive,params){
-    
-    super(params)
-
-     this.constructor.__type = primitive.__type // dont like the idea this redefines what the actual type is
-
-    if(isSphere(this)) this.levelArchitecture.config.radius = params.radius
-    
-  }
-
-  createDimensions(){
-
-    let batchedMesh = new THREE.BatchedMesh(0,0,0, new THREE.MeshStandardMaterial())
-
-    this._transferGeometry(batchedMesh)
-
-    super.createDimensions()
-
-    let promises = []
-
-    this.quadTreeCollections.forEach((quadTreeNode) => {promises.push(quadTreeNode.getMeshNode()) })
-
-    this.batchedMesh = Promise.all(promises).then( _ => {
-
-      this.add(batchedMesh)
-
-      return batchedMesh
-    
-    })
-
-  }
-
-  _transferGeometry(batchedMesh){
-
-    let polyPerLevel = this.levelArchitecture.config.levels.polyPerLevel
-
-    this.levelArchitecture.on('afterMeshCreation', ( node, payload ) => {
  
-      const parent = node.parent;
-
-      parent.remove( node );
-
-      const geometry  = node.mesh().geometry 
-
-      const depth     = node.params.depth 
-
-      const vertex    = polyPerLevel[depth] 
-
-      const vertexCount = ( ( vertex + 1 ) * ( vertex + 1 ) )
-
-      const indexCount  = ( ( vertex**2  ) * 6 )
-
-      const maxInstanceCount = batchedMesh.maxInstanceCount + 1
-
-      const maxVertexCount   = batchedMesh._maxVertexCount  + vertexCount // doc shows _maxVertexCount without the undscore
-
-      const maxIndexCount    = batchedMesh._maxIndexCount   + indexCount // doc shows _maxIndexCount without the undscore
-
-      batchedMesh.setInstanceCount( maxInstanceCount )
-
-      batchedMesh.setGeometrySize ( maxVertexCount, maxIndexCount )
-
-      const geometryId = batchedMesh.addGeometry( geometry );
-      
-      const id = batchedMesh.addInstance( geometryId );
-
-      const matrix = new THREE.Matrix4();
-
-      matrix.premultiply(new THREE.Matrix4().makeTranslation(...parent.position.toArray()));
-
-      batchedMesh.setMatrixAt( id, matrix );
-
-      batchedMesh.setColorAt ( id, new THREE.Color( Math.random() * 0xffffff ) )
-
-    }) 
-
-  }
-
-}*/
 
 
-export class Quad  extends Primitive{
-  static __type = 'Quad'
-  constructor(params){
-    super(params)
-   }
-}
-
-export class Cube  extends Quad{
-  static __type = 'Cube'
-  constructor(params){
-    super(params) 
-   }
-}
-
-export class Sphere extends Cube{
-  static __type = 'Sphere'
-  constructor(params){
-    super(params) 
-    this.levelArchitecture.config.radius = params.radius
-  }
-}

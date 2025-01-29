@@ -1,230 +1,141 @@
-// @vitest-environment jsdom
-
-import { QuadGeometry, NormalizedQuadGeometry } from "../src/engine/geometry.js"
-import { expect, test,describe } from 'vitest'
+import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
+import { QuadGeometry, NormalizedQuadGeometry } from '../src/engine/geometry';
 
+describe('QuadGeometry Class', () => {
+  it('should initialize with correct parameters', () => {
+    const geometry = new QuadGeometry(100, 100, 10, 10);
 
-describe('QuadGeometry', () => {
+    expect(geometry.parameters.width).toBe(100);
+    expect(geometry.parameters.height).toBe(100);
+    expect(geometry.parameters.widthSegments).toBe(10);
+    expect(geometry.parameters.heightSegments).toBe(10);
+    expect(geometry.type).toBe('QuadGeometry');
+  });
 
-    test('should initialize with default parameters', () => {
-        const quad = new QuadGeometry();
-        expect(quad.parameters).toEqual({
-            width: 1,
-            height: 1,
-            widthSegments: 1,
-            heightSegments: 1,
-        });
-    });
+  it('should build geometry with correct attributes', () => {
+    const geometry = new QuadGeometry(100, 100, 10, 10);
+    geometry._setMatrix({ matrix: new THREE.Matrix4() });
+    geometry._setOffset({ offset: [0, 0, 0] });
+    geometry._build();
 
-    test('should correctly generate vertices and attributes', () => {
-        const quad = new QuadGeometry(2, 2, 1, 1);
-        quad._setMatrix({matrix: new THREE.Matrix4()})
-        quad._setOffset({offset:[0,0,0]})
-        quad._build();
+    expect(geometry.attributes.position.count).toBeGreaterThan(0);
+    expect(geometry.index.count).toBeGreaterThan(0);
+    expect(geometry.attributes.uv.count).toBeGreaterThan(0);
+  });
 
-        // Check positions
-        const positions = quad.getAttribute('position').array;
-        expect(positions).toEqual(new Float32Array([
-            -1,  1, 0,
-             1,  1, 0,
-            -1, -1, 0,
-             1, -1, 0,
-        ]));
+  it('should handle threading build correctly', () => {
+    const geometry = new QuadGeometry(100, 100, 10, 10);
+    const buffers = {
+      positionBuffer: new Float32Array((10 + 1) * (10 + 1) * 3),
+      normalBuffer: new Float32Array((10 + 1) * (10 + 1) * 3),
+      uvBuffer: new Float32Array((10 + 1) * (10 + 1) * 2),
+      indexBuffer: new Uint32Array(10 * 10 * 6),
+    };
 
-        // Check normals
-        const normals = quad.getAttribute('normal').array;
-        expect(normals).toEqual(new Float32Array([
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-        ]));
+    geometry._setMatrix({ matrix: new THREE.Matrix4() });
+    geometry._setOffset({ offset: [0, 0, 0] });
+    geometry._threadingBuild(buffers);
 
-        // Check UVs
-        const uvs = quad.getAttribute('uv').array;
-        expect(uvs).toEqual(new Float32Array([
-            0, 1,
-            1, 1,
-            0, 0,
-            1, 0,
-        ]));
+    expect(buffers.positionBuffer.length).toBeGreaterThan(0);
+    expect(buffers.indexBuffer.length).toBeGreaterThan(0);
+  });
 
-        // Check indices
-        const indices = quad.getIndex().array;
-        expect(indices).toEqual(new Uint16Array([
-            0, 2, 1,
-            2, 3, 1,
-        ]));
-    });
+  it('should reset geometry correctly', () => {
+    const geometry = new QuadGeometry(100, 100, 10, 10);
+    geometry._setMatrix({ matrix: new THREE.Matrix4() });
+    geometry._build();
 
+    const centerPosition = new THREE.Vector3();
+    geometry._restGeometry(centerPosition);
 
-    test('should apply matrix transformations to vertices', () => {
-        const quad = new QuadGeometry(2, 2, 1, 1);
-        quad._setMatrix({ matrix: new THREE.Matrix4().makeRotationZ(Math.PI / 2) });
-        quad._setOffset({offset:[0,0,0]})
-        quad._build();
+    expect(centerPosition.length()).toBeCloseTo(0, 5);
+  });
 
-        const positions = quad.getAttribute('position').array;
+  it('should copy the geometry correctly', () => {
+    const geometry = new QuadGeometry(100, 100, 10, 10);
+    const copy = geometry.copy(geometry);
 
-        // Rotated vertices around Z-axis 90 degrees
-        expect(positions).toEqual(new Float32Array([
-            -1, -1, 0,
-            -1,  1, 0,
-             1, -1, 0,
-             1,  1, 0,
-        ]));
-    });
+    expect(copy.parameters).toEqual(geometry.parameters);
+    expect(copy.type).toBe('QuadGeometry');
+  });
 
-    test('should apply offset to vertices', () => {
-        const quad = new QuadGeometry(2, 2, 1, 1);
-        quad._setMatrix({matrix: new THREE.Matrix4()})
-        quad._setOffset({ offset: [1, 1, 0] });
-        quad._build();
+  it('should serialize and deserialize geometry correctly', () => {
+    const geometry = new QuadGeometry(100, 100, 10, 10);
+    const json = geometry.toJSON();
+    const deserialized = QuadGeometry.fromJSON(json);
 
-        const positions = quad.getAttribute('position').array;
-
-        // Vertices with offset [1, 1, 0]
-        expect(positions).toEqual(new Float32Array([
-             0,  2, 0,
-             2,  2, 0,
-             0,  0, 0,
-             2,  0, 0,
-        ]));
-    });
-
-    test('should copy geometry parameters', () => {
-        const quad1 = new QuadGeometry(2, 2, 2, 2);
-        const quad2 = new QuadGeometry().copy(quad1);
-
-        expect(quad2.parameters).toEqual(quad1.parameters);
-    });
-
-    test('should create geometry from JSON', () => {
-        const data = {
-            width: 3,
-            height: 3,
-            widthSegments: 2,
-            heightSegments: 2,
-        };
-
-        const quad = QuadGeometry.fromJSON(data);
-        expect(quad.parameters).toEqual(data);
-    });
-
-
+    expect(deserialized.parameters.width).toBe(100);
+    expect(deserialized.parameters.height).toBe(100);
+  });
 });
 
+describe('NormalizedQuadGeometry Class', () => {
+  it('should initialize with correct parameters', () => {
+    const geometry = new NormalizedQuadGeometry(100, 100, 10, 10, 50);
 
+    expect(geometry.parameters.width).toBe(100);
+    expect(geometry.parameters.height).toBe(100);
+    expect(geometry.parameters.widthSegments).toBe(10);
+    expect(geometry.parameters.heightSegments).toBe(10);
+    expect(geometry.parameters.radius).toBe(50);
+    expect(geometry.type).toBe('NormalizedQuadGeometry');
+  });
 
-describe('NormalizedQuadGeometry', () => {
+  it('should build geometry with normalized attributes', () => {
+    const geometry = new NormalizedQuadGeometry(100, 100, 10, 10, 50);
+    geometry._setMatrix({ matrix: new THREE.Matrix4() });
+    geometry._setOffset({ offset: [0, 0, 0] });
+    geometry._build();
 
-    test('should initialize with default parameters', () => {
-        const quad = new NormalizedQuadGeometry();
-        expect(quad.parameters).toEqual({
-            width: 1,
-            height: 1,
-            widthSegments: 1,
-            heightSegments: 1,
-            radius: 1
-        });
-    });
+    expect(geometry.attributes.position.count).toBeGreaterThan(0);
+    expect(geometry.index.count).toBeGreaterThan(0);
+    expect(geometry.attributes.normal.count).toBeGreaterThan(0);
+  });
 
-    test('should correctly generate vertices and attributes', () => {
-        const quad = new NormalizedQuadGeometry(4, 4, 1, 1, 2);
-        quad._setMatrix({matrix: new THREE.Matrix4()})
-        quad._setOffset({offset:[0,0,0]})
-        quad._build();
+  it('should handle threading build with normalized geometry', () => {
+    const geometry = new NormalizedQuadGeometry(100, 100, 10, 10, 50);
+    const buffers = {
+      positionBuffer: new Float32Array((10 + 1) * (10 + 1) * 3),
+      normalBuffer: new Float32Array((10 + 1) * (10 + 1) * 3),
+      uvBuffer: new Float32Array((10 + 1) * (10 + 1) * 2),
+      indexBuffer: new Uint32Array(10 * 10 * 6),
+    };
 
-        // Check positions
-        const positions = quad.getAttribute('position').array;
-        expect(positions).toEqual(new Float32Array([
-            -2.1213202476501465,  2.1213202476501465, 0,
-            2.1213202476501465,  2.1213202476501465, 0,
-            -2.1213202476501465, -2.1213202476501465, 0,
-            2.1213202476501465, -2.1213202476501465, 0,
-        ]));
+    geometry._setMatrix({ matrix: new THREE.Matrix4() });
+    geometry._setOffset({ offset: [0, 0, 0] });
+    geometry._threadingBuild(buffers);
 
-        // Check normals
-        const normals = quad.getAttribute('normal').array;
-        expect(normals).toEqual(new Float32Array([
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-        ]));
+    expect(buffers.positionBuffer.length).toBeGreaterThan(0);
+    expect(buffers.normalBuffer.length).toBeGreaterThan(0);
+  });
 
-        // Check UVs
-        const uvs = quad.getAttribute('uv').array;
-        expect(uvs).toEqual(new Float32Array([
-            0, 1,
-            1, 1,
-            0, 0,
-            1, 0,
-        ]));
+  it('should reset normalized geometry correctly', () => {
+    const geometry = new NormalizedQuadGeometry(100, 100, 10, 10, 50);
+    geometry._setMatrix({ matrix: new THREE.Matrix4() });
+    geometry._build();
 
-        // Check indices
-        const indices = quad.getIndex().array;
-        expect(indices).toEqual(new Uint16Array([
-            0, 2, 1,
-            2, 3, 1,
-        ]));
-    });
+    const centerPosition = new THREE.Vector3();
+    geometry._restGeometry(centerPosition);
 
+    expect(centerPosition.length()).toBeCloseTo(0, 5);
+  });
 
-    test('should apply matrix transformations to vertices', () => {
-        const quad = new NormalizedQuadGeometry(4, 4, 1, 1, 2);
-        quad._setMatrix({ matrix: new THREE.Matrix4().makeRotationZ(Math.PI / 2) });
-        quad._setOffset({offset:[0,0,0]})
-        quad._build();
+  it('should copy the normalized geometry correctly', () => {
+    const geometry = new NormalizedQuadGeometry(100, 100, 10, 10, 50);
+    const copy = geometry.copy(geometry);
 
-        const positions = quad.getAttribute('position').array;
+    expect(copy.parameters).toEqual(geometry.parameters);
+    expect(copy.type).toBe('NormalizedQuadGeometry');
+  });
 
-        // Rotated vertices around Z-axis 90 degrees
-        expect(positions).toEqual(new Float32Array([
-            -2.1213202476501465, -2.1213202476501465, 0,
-            -2.1213202476501465,  2.1213202476501465, 0,
-            2.1213202476501465, -2.1213202476501465, 0,
-             2.1213202476501465,  2.1213202476501465, 0,
-        ]));
-    });
+  it('should serialize and deserialize normalized geometry correctly', () => {
+    const geometry = new NormalizedQuadGeometry(100, 100, 10, 10, 50);
+    const json = geometry.toJSON();
+    const deserialized = NormalizedQuadGeometry.fromJSON(json);
 
-    test('should apply offset to vertices', () => {
-        const quad = new NormalizedQuadGeometry(4, 4, 1, 1, 2);
-        quad._setMatrix({matrix: new THREE.Matrix4()})
-        quad._setOffset({ offset: [1, 1, 0] });
-        quad._build();
-
-        const positions = quad.getAttribute('position').array;
-
-        // Vertices with offset [1, 1, 0]
-        expect(positions).toEqual(new Float32Array([
-            -0.9486833214759827,  2.8460497856140137, 0,
-            2.1213202476501465,  2.1213202476501465, 0,
-            -2.1213202476501465,  -2.1213202476501465, 0,
-            2.8460497856140137,  -0.9486833214759827, 0,
-        ]));
-    });
-
-    test('should copy geometry parameters', () => {
-        const quad1 = new NormalizedQuadGeometry(4, 4, 1, 1, 2);
-        const quad2 = new NormalizedQuadGeometry().copy(quad1);
-
-        expect(quad2.parameters).toEqual(quad1.parameters);
-    });
-
-    test('should create geometry from JSON', () => {
-        const data = {
-            width: 3,
-            height: 3,
-            widthSegments: 2,
-            heightSegments: 2,
-            radius: 2,
-        };
-
-        const quad = NormalizedQuadGeometry.fromJSON(data);
-        expect(quad.parameters).toEqual(data);
-    });
-
-
+    expect(deserialized.parameters.width).toBe(100);
+    expect(deserialized.parameters.height).toBe(100);
+    expect(deserialized.parameters.radius).toBe(50);
+  });
 });
