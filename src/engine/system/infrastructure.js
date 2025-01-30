@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import * as THREEWGPU from 'three/webgpu'
+import * as WGP3 from 'three/webgpu'
 import { EventManager } from './eventManager.js'
 
 export const setDefaultEvents = () =>{
@@ -11,7 +11,7 @@ export const setDefaultEvents = () =>{
 }
 
 
-export class LevelArchitecture {
+export class Infrastructure {
 
   constructor(config = {}) {
     let shardedData = {
@@ -24,7 +24,9 @@ export class LevelArchitecture {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
-      material: new THREEWGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff )}),
+      material: new WGP3.MeshStandardNodeMaterial({ 
+        transparent:true,
+        color: new THREE.Color( Math.random()*0xffffff)}),
      }
     this.config = Object.assign( shardedData, config )
 

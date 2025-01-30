@@ -4,17 +4,17 @@ import { QuadTree } from './../dataStructures/quadtree.js'
 import { geometrySelector } from '../geometries/geometry.js'
 import { workersSRC } from '../system/threading/source.js'
 import { QuadTreeNode,QuadTreeMeshNode,QuadTreeSpatialNode } from './../dataStructures/nodes/quadtreeNode.js'
-import { LevelArchitecture  } from './../system/levelArchitecture.js'
+import { Infrastructure } from './../system/infrastructure.js'
 import { bufferInit,geometryInit,meshInit } from './../utils/geometryUtils.js'
 import { threadingInit } from './../utils/threadingUtils.js'
-import { isSphere,whichDimensionFn } from './../utils/primitiveUtils.js'
+import { isSphere,whichDimensionFn }  from './../utils/primitiveUtils.js'
 import { setTextures,createUVObject } from './../utils/textureUtils.js'
 
 
 export class Primitive extends THREE.Object3D {
   static __type = 'Primitive'
 
-  constructor(params) {
+  constructor(params, infrastructure = new Infrastructure()) {
 
     let {size, dimension, resolution } = params
     
@@ -24,7 +24,7 @@ export class Primitive extends THREE.Object3D {
 
     this.quadTreeCollections = new Map();
 
-    this.levelArchitecture   = new LevelArchitecture();
+    this.infrastructure      = infrastructure;
 
     this._createMeshNodes    = () => {}
   }
@@ -41,15 +41,15 @@ export class Primitive extends THREE.Object3D {
   createQuadTree({ levels }) {
     const { size, resolution, dimension } = this.parameters;
 
-    Object.assign(this.levelArchitecture.config, {
+    Object.assign(this.infrastructure.config, {
       maxLevelSize: size,
       minLevelSize: size / Math.pow(2, levels - 1),
       minPolyCount: resolution,
       dimensions:   dimension,
     });
 
-    this.levelArchitecture.levels(levels);
-    this.levelArchitecture.createArrayBuffers();
+    this.infrastructure.levels(levels);
+    this.infrastructure.createArrayBuffers();
     this.quadTree = new QuadTree();
   }
 
@@ -65,13 +65,13 @@ export class Primitive extends THREE.Object3D {
       resolution,
     } = meshNode.params
 
-    const { material } = this.levelArchitecture.config;
+    const { material } = this.infrastructure.config;
 
-    const { buffers, views } = bufferInit(this.levelArchitecture.config.arrybuffers[size].geometryData, geometryClass);
+    const { buffers, views } = bufferInit(this.infrastructure.config.arrybuffers[size].geometryData, geometryClass);
     
     const textureObj = {textureSrc:{},uv:createUVObject().update(meshNode)}
 
-    this.levelArchitecture.events.trigger('loadTexture',textureObj)
+    this.infrastructure.events.trigger('loadTexture',textureObj)
  
     const threadarchitecture  = threadingInit(geometryClass, workersSRC);
     threadarchitecture.setPayload({
@@ -83,7 +83,7 @@ export class Primitive extends THREE.Object3D {
       UV:{offset:textureObj.uv.getOffset(),scale:textureObj.uv.getScale()},
       ...buffers,
       ...additionalPayload,
-      //...this.levelArchitecture.events.trigger('setTextures'),
+      //...this.infrastructure.events.trigger('setTextures'),
     });
 
     return new Promise((resolve) => {
@@ -100,14 +100,14 @@ export class Primitive extends THREE.Object3D {
             meshNode,
             mesh,
             srcs:textureObj.textureSrc,
-            levelArchitecture:this.levelArchitecture,
+            infrastructure:this.infrastructure,
             promiseResolve:resolve,
           })
           
         }else{
 
           meshNode.add(mesh)
-          this.levelArchitecture.events.trigger('afterMeshCreation',meshNode,{uv:createUVObject().update(meshNode)}) 
+          this.infrastructure.events.trigger('afterMeshCreation',meshNode,{uv:createUVObject().update(meshNode)}) 
           resolve(meshNode);
 
         }
@@ -127,7 +127,7 @@ export class Primitive extends THREE.Object3D {
       matrixRotationData, 
       size, 
       resolution, 
-      levelArchitecture: this.levelArchitecture
+      infrastructure: this.infrastructure
     })
 
     this.add(quadTreeNode)
@@ -145,7 +145,7 @@ export class Primitive extends THREE.Object3D {
 
     quadTreeNode.getSpatialNode().generateKey()
     
-    this.levelArchitecture.events.trigger('afterSpatialNodeCreation',quadTreeNode.getSpatialNode()) 
+    this.infrastructure.events.trigger('afterSpatialNodeCreation',quadTreeNode.getSpatialNode()) 
     
    return quadTreeNode.getSpatialNode();
   }

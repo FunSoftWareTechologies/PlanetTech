@@ -162,7 +162,7 @@ export class QuadTreeSpatialNode extends Node{
         
         if(this.normalize){
             
-            let radius =  this.params.levelArchitecture.config.radius
+            let radius =  this.params.infrastructure.config.radius
             
             points.forEach((e,i)=>{
 
@@ -237,7 +237,7 @@ export class QuadTreeSpatialNode extends Node{
 
         let axis  = direction.includes('z') ? 'z' : direction.includes('x') ? 'x' : 'y';
 
-        let resolution = primitive.levelArchitecture.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
+        let resolution = primitive.infrastructure.config.arrybuffers[( size / 2 )].geometryData.parameters.widthSegments
          
         size = ( size / 2 )
 

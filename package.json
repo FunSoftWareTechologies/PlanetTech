@@ -1,6 +1,6 @@
 {
-  "homepage": "https://github.com/InterstellarJS/PlanetTech/examples/",
-  "name": "@interstellar-js-core/planettech",
+   
+  "name": "@funsoftware/planettech",
   "version": "0.0.8-alpha.0.1.7",
   "description": "Toolkit for creating real 3D planets that can be transtioned from ground to sky.",
   "main": "index.js",
@@ -8,13 +8,6 @@
   "sidEffects": false,
   "scripts": {
     "test": "vitest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/InterstellarJS/PlanetTech"
-  },
-  "bugs": {
-    "url": "https://github.com/InterstellarJS/PlanetTech/issues"
   },
   "keywords": [
     "Planet",

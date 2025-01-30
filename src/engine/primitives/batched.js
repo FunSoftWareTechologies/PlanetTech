@@ -10,7 +10,7 @@ export class BatchedPrimitive extends Primitive{
   
        this.constructor.__type = primitive.__type // dont like the idea this redefines what the actual type is
   
-      if(isSphere(this)) this.levelArchitecture.config.radius = params.radius
+      if(isSphere(this)) this.infrastructure.config.radius = params.radius
       
     }
   
@@ -38,9 +38,9 @@ export class BatchedPrimitive extends Primitive{
   
     _transferGeometry(batchedMesh){
   
-      let polyPerLevel = this.levelArchitecture.config.levels.polyPerLevel
+      let polyPerLevel = this.infrastructure.config.levels.polyPerLevel
   
-      this.levelArchitecture.on('afterMeshCreation', ( node, payload ) => {
+      this.infrastructure.on('afterMeshCreation', ( node, payload ) => {
    
         const parent = node.parent;
   

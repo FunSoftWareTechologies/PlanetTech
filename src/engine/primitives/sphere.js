@@ -8,6 +8,6 @@
     static __type = 'Sphere'
     constructor(params){
       super(params) 
-      this.levelArchitecture.config.radius = params.radius
+      this.infrastructure.config.radius = params.radius
     }
   }

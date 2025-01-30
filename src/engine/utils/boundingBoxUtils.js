@@ -60,7 +60,7 @@ export const createLocations = (size, offset, axis) => {
 export const coordinate = (idx) => ['NE', 'NW', 'SE', 'SW'][idx];
 
 export const isWithinBounds = (distance, primitive, size) => {
-  return distance < primitive.levelArchitecture.config.lodDistanceOffset * size && size > primitive.levelArchitecture.config.minLevelSize;
+  return distance < primitive.infrastructure.config.lodDistanceOffset * size && size > primitive.infrastructure.config.minLevelSize;
 };
 
 export const generateKey = (node) => `${node.params.index}_${node.params.direction}_${node.position.x}_${node.position.y}_${node.params.size}`;

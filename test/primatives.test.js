@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as THREE from 'three';
 import { Primitive } from '../src/engine/primitives';
-import { LevelArchitecture } from '../src/engine/system/levelArchitecture';
+import { Infrastructure } from '../src/engine/system/infrastructure';
 
 let primitive;
 
@@ -25,7 +25,7 @@ describe('Primitive Class', () => {
   it('should create a quadtree with specified levels', () => {
     
 
-    const config = primitive.levelArchitecture.config;
+    const config = primitive.infrastructure.config;
     expect(config.maxLevelSize).toBe(100);
     expect(config.minLevelSize).toBe(12.5); // 100 / 2^3
     expect(config.levels.numOflvls).toBe(4);
@@ -75,9 +75,9 @@ describe('Primitive Class', () => {
   });
 });
 
-describe('LevelArchitecture Integration', () => {
+describe('Infrastructure Integration', () => {
   it('should create levels with appropriate configurations', () => {
-    const architecture = new LevelArchitecture({
+    const architecture = new Infrastructure({
       maxLevelSize: 100,
       minLevelSize: 25,
       dimensions: 2,

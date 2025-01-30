@@ -34,9 +34,9 @@ return {
 };
 
 export const calculateUV = (node, scale, Offset) => {
-    let maxLevelSize = node.params.levelArchitecture.config.maxLevelSize;
+    let maxLevelSize = node.params.infrastructure.config.maxLevelSize;
     const w = node.params.size;
-    const d = node.params.levelArchitecture.config.dimensions * scale;
+    const d = node.params.infrastructure.config.dimensions * scale;
     const testscaling = w / (maxLevelSize * d);
 
     const halfScale = testscaling / 2;
@@ -90,7 +90,7 @@ export const correctTexturePosition = (node) => {
 };
 
 
-export const loader = (meshNode,mesh, uv, src, levelArchitecture, promiseResolve)=>{
+export const loader = (meshNode,mesh, uv, src, infrastructure, promiseResolve)=>{
 
     new THREE.ImageBitmapLoader().load( src, (imageBitmap ) =>{
     
@@ -106,7 +106,7 @@ export const loader = (meshNode,mesh, uv, src, levelArchitecture, promiseResolve
 
         meshNode.add(mesh)
 
-        levelArchitecture.trigger('afterMeshCreation',meshNode,{uv,texture}) 
+        infrastructure.trigger('afterMeshCreation',meshNode,{uv,texture}) 
 
         promiseResolve(meshNode);      
  
@@ -115,15 +115,15 @@ export const loader = (meshNode,mesh, uv, src, levelArchitecture, promiseResolve
   }
 
 
-export const cubeloader = (meshNode,mesh, uv, srcs, levelArchitecture, promiseResolve) => {
+export const cubeloader = (meshNode,mesh, uv, srcs, infrastructure, promiseResolve) => {
 
-    loader(meshNode,mesh,uv,srcs[meshNode.params.direction],levelArchitecture, promiseResolve)
+    loader(meshNode,mesh,uv,srcs[meshNode.params.direction],infrastructure, promiseResolve)
 
 }
 
  
 export const setTextures = (params) => {
-    const {meshNode,  mesh, srcs, levelArchitecture, promiseResolve } = params;
+    const {meshNode,  mesh, srcs, infrastructure, promiseResolve } = params;
     const uv  = createUVObject().update(meshNode);
-    cubeloader(meshNode,mesh, uv, srcs, levelArchitecture, promiseResolve);
+    cubeloader(meshNode,mesh, uv, srcs, infrastructure, promiseResolve);
   };

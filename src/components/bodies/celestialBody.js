@@ -7,7 +7,7 @@ const setRigidBodyCallBack = ( node, primitive, planetaryPhysics )=>{
 
     const currentDepth = node.params.depth 
     
-    const maxDepth     = primitive.levelArchitecture.config.levels.levelsArray.length-1 
+    const maxDepth     = primitive.infrastructure.config.levels.levelsArray.length-1 
 
     if( currentDepth === maxDepth ) planetaryPhysics.setPrimitiveRigidBody(node)  
 
@@ -27,7 +27,7 @@ export class CelestialBody extends THREE.Object3D{
 
         this.physicsEngine = new PrimitiveMechanics(new Physics( gravity ))
 
-        this.primitive.levelArchitecture.on('afterMeshCreation', ( node, _ ) => {
+        this.primitive.infrastructure.on('afterMeshCreation', ( node, _ ) => {
 
             setRigidBodyCallBack ( node, this.primitive, this.physicsEngine )
 

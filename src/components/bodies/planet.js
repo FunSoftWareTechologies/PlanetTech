@@ -15,7 +15,7 @@ export class Planet extends CelestialBody{
 
         this.primitive = new Sphere(primitiveData)
     
-        this.primitive.levelArchitecture.config.lodDistanceOffset = primitiveData.offset 
+        this.primitive.infrastructure.config.lodDistanceOffset = primitiveData.offset 
         
         this.primitive.createQuadTree({levels:primitiveData.levels})
       
@@ -26,7 +26,7 @@ export class Planet extends CelestialBody{
 
     setEvents(name, eventHandlers){
 
-        eventHandlers.forEach(fn => { this.primitive.levelArchitecture.events.on(name,fn)  });
+        eventHandlers.forEach(fn => { this.primitive.infrastructure.events.on(name,fn)  });
 
     }
 
