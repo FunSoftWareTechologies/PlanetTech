@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import * as WGP3 from 'three/webgpu'
+import * as TSL   from 'three/tsl'
+import * as THREEWEBGPU from 'three/webgpu'
 import { EventManager } from './eventManager.js'
 
 export const setDefaultEvents = () =>{
@@ -24,9 +25,8 @@ export class Infrastructure {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
-      material: new WGP3.MeshStandardNodeMaterial({ 
-        transparent:true,
-        color: new THREE.Color( Math.random()*0xffffff)}),
+      meshNodeMaterial: new THREEWEBGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff)}), //todo  
+      spatialNodeMaterial: new THREEWEBGPU.MeshBasicNodeMaterial({ color: new THREE.Color( Math.random(),Math.random(),Math.random())}), //todo
      }
     this.config = Object.assign( shardedData, config )
 

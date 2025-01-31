@@ -103,13 +103,17 @@ export class QuadTreeNode extends THREE.Object3D{
 
 
 export class QuadTreeMeshNode extends Node{ 
+    static __type = 'meshNode'
+
     constructor(params,state = 'active'){ 
         super(params,state)
       }
+      
 }
 
 
 export class QuadTreeSpatialNode extends Node{
+    static __type = 'spatialNode'
 
     constructor(params, normalize, state = 'active'){ 
 

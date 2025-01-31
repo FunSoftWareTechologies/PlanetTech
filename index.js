@@ -9,3 +9,5 @@ export * from './src/core/shaders/wgsl/noise.js'
  
 export * from './src/components/bodies/planet.js'
 export * from './src/core/physics/engine.js';
+
+export * from './src/engine/utils/boundingBoxUtils.js'
