@@ -25,8 +25,7 @@ export class Infrastructure {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
-      meshNodeMaterial: new THREEWEBGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff)}), //todo  
-      spatialNodeMaterial: new THREEWEBGPU.MeshBasicNodeMaterial({ color: new THREE.Color( Math.random(),Math.random(),Math.random())}), //todo
+      material: new THREEWEBGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff)}),
      }
     this.config = Object.assign( shardedData, config )
 

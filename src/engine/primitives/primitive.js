@@ -65,7 +65,7 @@ export class Primitive extends THREE.Object3D {
       resolution,
     } = meshNode.params
 
-    const { meshNodeMaterial } = this.infrastructure.config;
+    const { material } = this.infrastructure.config;
 
     const { buffers, views } = bufferInit(this.infrastructure.config.arrybuffers[size].geometryData, geometryClass);
     
@@ -91,7 +91,7 @@ export class Primitive extends THREE.Object3D {
 
         const geometry = geometryInit({ size, resolution, additionalPayload, geometryClass, views });
  
-        const mesh = meshInit(geometry, meshNodeMaterial, payload.data.centerdPosition);
+        const mesh = meshInit(geometry, material, payload.data.centerdPosition);
         mesh.position.copy(meshNode.position.clone().negate())
 
         if( Object.values(textureObj.textureSrc).length !== 0){

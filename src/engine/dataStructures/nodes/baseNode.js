@@ -1,57 +1,51 @@
 import * as THREE from 'three'
-import * as TSL   from 'three/tsl'
-import * as THREEWEBGPU from 'three/webgpu'
+import * as TSL from 'three/tsl'
+import * as WG from 'three/webgpu'
 
-export const getVisibleMaterial=(node)=>{
-    if ( node.constructor.__type === 'meshNode'){
-         return node.params.infrastructure.config.meshNodeMaterial
-    } else if ( node.constructor.__type === 'spatialNode'){
-        return node.params.infrastructure.config.spatialNodeMaterial
-    }else{
-        console.warn('none existing node type')
-    }
-}
-
+ 
 export class Node extends THREE.Object3D{ 
     #mesh = null
-    static __type = 'Node'
 
     constructor(params,state){ 
       super() 
       this.params = params
-      this.state  = state
-      this.hiddenMaterial  = new THREEWEBGPU.MeshStandardNodeMaterial({color:'black',visible:false})
-      this.visibleMaterial = getVisibleMaterial(this)
-     }
+      this.state  = state      
+    }
 
     add(mesh){
-        if (this.state !== 'active')  mesh.material = this.hiddenMaterial  
+        if (this.state !== 'active') mesh.layers.set( 1 )
         this.#mesh = mesh
         super.add(mesh)
         return this
     }
 
     attach(mesh){
-        if (this.state !== 'active') mesh.material = this.hiddenMaterial 
+        if (this.state !== 'active') mesh.layers.set( 1 )
         this.#mesh = mesh
         super.attach(mesh)
         return this
     }
 
-    mesh(){ return this.#mesh } //todo
+    mesh(){ return this.#mesh }
 
     showMesh() {
         if (this.state !== 'active') {
-            if (this.mesh())  this.mesh().material =  this.visibleMaterial
-            this.state = 'active';
+         if (this.mesh())  this.mesh().layers.set( 0 )
+        this.state = 'active';
         }
       }
 
     hideMesh() {
         if (this.state == 'active') {
-            if (this.mesh()) this.mesh().material = this.hiddenMaterial
-             this.state = 'inactive';
+            if (this.mesh()) this.mesh().layers.set( 1 ) 
+            this.state = 'inactive';
         }
     }
 
 }
+
+
+
+
+
+ 
