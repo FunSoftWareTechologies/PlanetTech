@@ -59,28 +59,34 @@ We will start with **PlanetTech**. Let's create a basic quadtree sphere without 
 Let's create a basic quadtree sphere without any textures or displacement, just coloring each dimension to show what's going on under the hood.
 
 ```javascript
-  let cubeUrls = [
-    new URL('./textuers/color/right_color_image.png', window.location.origin).href,
-    new URL('./textuers/color/left_color_image.png',  window.location.origin).href,
-    new URL('./textuers/color/top_color_image.png',   window.location.origin).href,
-    new URL('./textuers/color/bottom_color_image.png',window.location.origin).href,
-    new URL('./textuers/color/front_color_image.png', window.location.origin).href,
-    new URL('./textuers/color/back_color_image.png' , window.location.origin).href, ]
+      let cubeUrls = [
+        new URL('./textuers/color/right_color_image.png', window.location.origin).href,
+        new URL('./textuers/color/left_color_image.png',  window.location.origin).href,
+        new URL('./textuers/color/top_color_image.png',   window.location.origin).href,
+        new URL('./textuers/color/bottom_color_image.png',window.location.origin).href,
+        new URL('./textuers/color/front_color_image.png', window.location.origin).href,
+        new URL('./textuers/color/back_color_image.png' , window.location.origin).href
+        ]
 
-  const texture =  new THREE.CubeTextureLoader() .load( cubeUrls )
-  const cubetexture = cubeTexture(texture,THREE.positionLocal)
+      const texture =  new THREE.CubeTextureLoader().load( cubeUrls )
+
+      const cubetexture = cubeTexture(texture,THREE.positionLocal)
   
-  let planet = new Planet()
-  planet.initSphere({
-    offset:1,
-    levels:6,
-    size:15,
-    radius:15,
-    resolution:5,
-    dimension:5
-  })
-  planet.create()
-  planet.primitive.infrastructure.config.material.colorNode = cubetexture
-  scene.add(planet)
+      let planet = new Planet()
+      planet.initSphere({
+       offset:1/1.5 ,
+       levels:6,
+       size:15,
+       radius:15,
+       resolution:10,
+       dimension:5
+      })
+      planet.primitive.infrastructure.config.material.colorNode = cubetexture
+      planet.setEvents ('afterMeshCreation',[(node)=>{/*do something*/ }])
+      planet.setEvents ('loadTexture',[(node)=>{/*do something*/}])
+      planet.setEvents ('afterSpatialNodeCreation',[(node)=>{ node.add(box3Mesh(node.boundingInfo.boundingBox,new THREE.Color( Math.random() * 0xffffff ))) }])
+      planet.create()
+
+      scene.add( planet )
 ```
  
