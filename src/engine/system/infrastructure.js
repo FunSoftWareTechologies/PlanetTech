@@ -25,10 +25,11 @@ export class Infrastructure {
       scale: 1,
       lodDistanceOffset: 1,
       displacmentScale:1,
+      visibilityLayer:{hiddenLayer:1,visibleLayer:0},
       material: new THREEWEBGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff)}),
      }
     this.config = Object.assign( shardedData, config )
-
+ 
     this.events = new EventManager();
 
     setDefaultEvents().forEach((event) => {

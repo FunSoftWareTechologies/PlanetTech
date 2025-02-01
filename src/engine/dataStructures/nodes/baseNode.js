@@ -9,39 +9,39 @@ export class Node extends THREE.Object3D{
     constructor(params,state){ 
       super() 
       this.params = params
-      this.state  = state      
+      this.state  = state 
+      this.visibilityLayer = this.params.infrastructure.config.visibilityLayer     
     }
 
+    mesh(){ return this.#mesh }
+
     add(mesh){
-        if (this.state !== 'active') mesh.layers.set( 1 )
+        if (this.state !== 'active') mesh.layers.set( this.visibilityLayer.hiddenLayer )
         this.#mesh = mesh
         super.add(mesh)
         return this
     }
 
     attach(mesh){
-        if (this.state !== 'active') mesh.layers.set( 1 )
+        if (this.state !== 'active') mesh.layers.set( this.visibilityLayer.hiddenLayer )
         this.#mesh = mesh
         super.attach(mesh)
         return this
     }
 
-    mesh(){ return this.#mesh }
-
     showMesh() {
         if (this.state !== 'active') {
-         if (this.mesh())  this.mesh().layers.set( 0 )
-        this.state = 'active';
+            if (this.mesh())  this.mesh().layers.set( this.visibilityLayer.visibleLayer )
+            this.state = 'active';
         }
       }
 
     hideMesh() {
         if (this.state == 'active') {
-            if (this.mesh()) this.mesh().layers.set( 1 ) 
+            if (this.mesh()) this.mesh().layers.set( this.visibilityLayer.hiddenLayer ) 
             this.state = 'inactive';
         }
     }
-
 }
 
 
