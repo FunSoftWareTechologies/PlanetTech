@@ -1,158 +1,49 @@
-# PlanetTech (ALPHA V0.8)
+⚠️ **Disclaimer:** PlanetTech is currently in its alpha version and is being developed by a single developer. Consequently, it's important to keep in mind that there may be bugs, spelling errors, lack of tests, and occasional inconsistencies in the library. While every effort is being made to provide a stable and enjoyable experience, please approach the library with the understanding that it's a work in progress. Your feedback, bug reports, and contributions are highly appreciated as they play a crucial role in improving the library and ensuring its quality.
 
-⚠️ **Disclaimer:** PlanetTech is currently in its **alpha version** and is being actively developed by a single developer. As such, you may encounter bugs, inconsistencies, or missing features. Your feedback, bug reports, and contributions are highly appreciated and will play a crucial role in shaping the future of this library.
 
+# PlanetTech (ALPHA V0.8) 
+This is the [official demo](https://interstellarjs.github.io/PlanetTech/examples/). It's under construction. Features will be added incrementally.
 <p align="center">
-  <img src="./assets/logoPT.png" alt="PlanetTech Logo" width="300"/>
+  <img src="./assets/logoPT.png" />
 </p>
 
----
 
-## 🌍 **About PlanetTech**
+## Goal
 
-PlanetTech is an **open-source JavaScript library** built on **THREE.js** that enables the creation of **procedural 3D planets and terrains** using a **quadtree Level of Detail (LOD)** approach. The library is designed to handle **large-scale planet generation** with high resolution, allowing seamless transitions from space to the ground.
+This video served as the motivation for the project. I would like to design a system/toolkit that gets as close as possible to what is demoed.
 
-Unlike games like *Star Citizen* or *No Man's Sky*, PlanetTech focuses solely on **planet generation**, providing a flexible and powerful toolkit for creating realistic and visually stunning 3D planets. Key features include:
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/ksMQ4hYhfSA/0.jpg)](https://www.youtube.com/watch?v=ksMQ4hYhfSA)
 
-- **Procedural planet generation** with customizable terrain textures.
-- **GPU-based rendering** for textures, displacement, and geometry shaping.
-- **Atmospheric effects** like volumetric lighting, fog, and scattering.
-- **Physics integration** for realistic ground interactions.
-- Support for both **WebGL** and **WebGPU** backends.
+**About:**
+PlanetTech is an open-source JavaScript library built using vanilla THREE.js, accompanied by a React UI for editing planets. Its primary purpose is to generate procedural planets and terrains using a quadtree LOD approach. The aim of this project is not to replicate titles like Star Citizen or No Man's Sky, but rather to provide a toolkit that emulates the tools they might employ for planet creation. The sole focus is on crafting planets, offering a straightforward and adaptable approach to designing realistic and visually captivating 3D planets on a grand scale. The key to the success of this project lies in its ability to handle **scale**, allowing for seamless transitions from the sky to the ground with high resolution. PlanetTech will include customizable features such as terrain textures, ground physics, atmospheric effects, and more. Thus, it does not encompass spaceships, weapons, player dynamics, etc.; its sole focus is planet generation.
 
----
+What sets this library apart is its utilization of the GPU for all tasks. This includes generating textures for each facet, performing displacement, and shaping PlaneGeometries into spherical forms; the entire process occurs on the GPU. Consequently, there is no need for WebWorkers at this stage.
 
-## 🚀 **Getting Started**
-
-### **Prerequisites**
-- Node.js (v16 or higher recommended)
-- A modern browser with WebGL or WebGPU support (e.g., Chrome, Firefox, Edge)
-- Basic knowledge of JavaScript and THREE.js
-
-### **Installation**
-To get started with PlanetTech, clone the repository and run the example:
-
-\`\`\`bash
-# Clone the repository
+## Getting Started
+To run the basic example:
+```
 $ git clone https://github.com/InterstellarJS/PlanetTech.git
-
-# Navigate to the examples directory
 $ cd PlanetTech/examples
-
-# Start a local server
 $ python3 -m http.server
-
-# Open your browser and navigate to:
-# http://localhost:8000/
+```
+Past `http://localhost:8000/` into the browser.
 
 https://github.com/miguelmyers8/PlanetTech/assets/18605314/f4621d3a-85ff-4224-be1f-8ae059b7efcc
 
-\`\`\`
 
-### **Using PlanetTech in Your Project**
-To integrate PlanetTech into your own project, follow these steps:
+## Build From Source
+If you would like to work on this, here is a example of how to get it working in your react project.
+The first thing you need to do is install it locally. 
+Copy the coi-serviceworker.js file from ./examples and paste it in the root directory or public folder where your index.html file is located,
+then link to it. Afterward, run the following commands.
+```
+$ cd ./to/your/projects/root
+$ git clone https://github.com/InterstellarJS/PlanetTech.git
+$ cd PlanetTech
+$ npm link
+$ cd ..
+$ npm link @interstellar-js-core/planettech && npm install
+```
 
-1. Install the library locally:
-   \`\`\`bash
-   $ cd ./to/your/projects/root
-   $ git clone https://github.com/InterstellarJS/PlanetTech.git
-   $ cd PlanetTech
-   $ npm link
-   $ cd ..
-   $ npm link @interstellar-js-core/planettech && npm install
-   \`\`\`
 
-2. Copy the \`coi-serviceworker.js\` file from the \`examples\` directory to your project's root or public folder, and link to it in your \`index.html\`.
 
-3. Start using PlanetTech in your code:
-   \`\`\`javascript
-   import { Planet } from '@interstellar-js-core/planettech';
-
-   const planet = new Planet();
-   planet.initSphere({
-     offset: 1 / 1.5,
-     levels: 6,
-     size: 15,
-     radius: 15,
-     resolution: 10,
-     dimension: 5,
-   });
-   planet.create();
-   scene.add(planet);
-   \`\`\`
-
----
-
-## 🌟 **Features**
-
-### **Core Features**
-- **Procedural Planet Generation**: Create unique and realistic planets using procedural algorithms.
-- **Quadtree LOD**: Efficiently manage large-scale terrain with dynamic level of detail.
-- **GPU-Powered Rendering**: Generate textures, displacement maps, and geometry entirely on the GPU.
-- **Atmospheric Effects**: Simulate atmospheric scattering, volumetric lighting, and fog for immersive environments.
-- **Physics Integration**: Add realistic ground physics using **Rapier3D**.
-
-### **Upcoming Features**
-- **Day-Night Cycle**: Simulate realistic lighting changes over time.
-- **Weather Simulation**: Add dynamic weather effects like rain, snow, and storms.
-- **Foliage Generation**: Populate planets with procedurally generated vegetation.
-- **Texture Editing**: Allow users to edit terrain textures in real-time.
-
----
-
-## 🛠️ **How It Works**
-
-PlanetTech is built on two main libraries:
-1. **PlanetTech**: The backend that handles planet system management, mesh creation, and quadtree data structures.
-2. **CubeMap**: The frontend responsible for texture generation.
-
-### **Key Components**
-- **WorldSpace**: A post-processing shader that manages the scene's space, including atmospheric effects and lighting.
-- **Quadtree Sphere**: A spherical representation of the planet, divided into quadtree nodes for efficient rendering.
-- **GPU-Based Rendering**: All textures, displacements, and geometry are generated on the GPU, ensuring high performance.
-
----
-
-## 📚 **Documentation**
-
-For detailed documentation, including API references and usage examples, check out the [DOC.md](./DOC.md) file.
-
----
-
-## 🤝 **Contributing**
-
-PlanetTech is an open-source project, and contributions are welcome! Whether you're fixing bugs, adding features, or improving documentation, your help is greatly appreciated.
-
-### **How to Contribute**
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Submit a pull request with a detailed description of your changes.
-
-### **Reporting Issues**
-If you encounter any bugs or have suggestions for improvements, please open an issue on the [GitHub Issues page](https://github.com/InterstellarJS/PlanetTech/issues).
-
----
-
-## 📜 **License**
-
-PlanetTech is licensed under the **Apache License 2.0**. See the [LICENSE.txt](./LICENSE.txt) file for more details.
-
----
-
-## 🙏 **Acknowledgments**
-
-- **THREE.js**: For providing the foundation for 3D rendering.
-- **Rapier3D**: For enabling realistic physics simulations.
-- **The Open-Source Community**: For inspiring and supporting this project.
-
----
-
-## 🌌 **Demo**
-
-Check out the [official demo](https://interstellarjs.github.io/PlanetTech/examples/) to see PlanetTech in action!
-
----
-
-<p align="center">
-  <em>Happy planet building! 🚀</em>
-</p>
