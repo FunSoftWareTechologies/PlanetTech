@@ -23,8 +23,6 @@ describe('Primitive Class', () => {
   });
 
   it('should create a quadtree with specified levels', () => {
-    
-
     const config = primitive.infrastructure.config;
     expect(config.maxLevelSize).toBe(100);
     expect(config.minLevelSize).toBe(12.5); // 100 / 2^3
@@ -32,7 +30,9 @@ describe('Primitive Class', () => {
     expect(config.levels.levelsArray.length).toBe(4);
   });
 
-  /*it('should create a plane mesh with correct attributes', async () => {
+  //this test fails. I havent installed vitest support for webworker
+  /*
+  it('should create a plane mesh with correct attributes', async () => {
 
     const mockMeshNode = {
       params: {
@@ -49,7 +49,8 @@ describe('Primitive Class', () => {
 
     expect(plane.geometry.attributes.position.count).toBeGreaterThan(0);
     expect(plane.material).toBeInstanceOf(THREE.MeshStandardMaterial);
-  });*/
+  });
+  */
 
   it('should add nodes to the quadTreeCollections', () => {
     const mockNode = { id: 1 };
@@ -77,16 +78,16 @@ describe('Primitive Class', () => {
 
 describe('Infrastructure Integration', () => {
   it('should create levels with appropriate configurations', () => {
-    const architecture = new Infrastructure({
+    const infrastructure = new Infrastructure({
       maxLevelSize: 100,
       minLevelSize: 25,
       dimensions: 2,
       minPolyCount: 10,
     });
 
-    architecture.levels(3);
+    infrastructure.levels(3);
 
-    expect(architecture.config.levels.numOflvls).toBe(3);
-    expect(architecture.config.levels.levelsArray).toEqual([100, 50, 25]);
+    expect(infrastructure.config.levels.numOflvls).toBe(3);
+    expect(infrastructure.config.levels.levelsArray).toEqual([100, 50, 25]);
   });
 });

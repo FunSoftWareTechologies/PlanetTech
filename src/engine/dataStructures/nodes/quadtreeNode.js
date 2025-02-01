@@ -2,9 +2,6 @@ import * as THREE from 'three'
 import { Node } from './baseNode.js' 
 import { project, createLocations, generateKey,coordinate} from '../../utils/boundingBoxUtils.js'
 
-
-
-
 export class QuadTreeNode extends THREE.Object3D{
     #_meshNode    = null
     #_spatialNode = null
