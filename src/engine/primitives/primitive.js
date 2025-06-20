@@ -11,6 +11,17 @@ import { isSphere,whichDimensionFn }  from './../utils/primitiveUtils.js'
 import { setTextures,createUVObject } from './../utils/textureUtils.js'
 
 
+
+/*export class Tile extends THREE.Object3D{
+  constructor(params){
+    super()
+    this.quadTreeNode = new QuadTreeNode(params)
+    this.add(this.quadTreeNode)
+  }
+}*/
+
+
+
 export class Primitive extends THREE.Object3D {
   static __type = 'Primitive'
 
