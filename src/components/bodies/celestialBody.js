@@ -1,9 +1,9 @@
  
 import * as THREE from 'three'
-import { Physics, PrimitiveMechanics } from '../../core/physics/engine.js'
+//import { Physics, PrimitiveMechanics } from '../../core/physics/engine.js'
  
 
-const setRigidBodyCallBack = ( node, primitive, planetaryPhysics )=>{
+/*const setRigidBodyCallBack = ( node, primitive, planetaryPhysics )=>{
 
     const currentDepth = node.params.depth 
     
@@ -11,7 +11,7 @@ const setRigidBodyCallBack = ( node, primitive, planetaryPhysics )=>{
 
     if( currentDepth === maxDepth ) planetaryPhysics.setPrimitiveRigidBody(node)  
 
- }
+ }*/
 
 
 export class CelestialBody extends THREE.Object3D{
@@ -25,13 +25,13 @@ export class CelestialBody extends THREE.Object3D{
 
     enablePhysics( gravity ){
 
-        this.physicsEngine = new PrimitiveMechanics(new Physics( gravity ))
+        /*this.physicsEngine = new PrimitiveMechanics(new Physics( gravity ))
 
         this.primitive.infrastructure.on('afterMeshCreation', ( node, _ ) => {
 
             setRigidBodyCallBack ( node, this.primitive, this.physicsEngine )
 
-        } )
+        } )*/
 
     }
 

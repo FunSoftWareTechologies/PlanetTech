@@ -1,4 +1,4 @@
-
+/*
 import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
 //https://sbedit.net/f06b5aef06fb48c2777501f643dfa21f765c9485#L273-L281
 
@@ -51,4 +51,4 @@ export class PrimitiveMechanics{
      }
 
  
-}
+}*/

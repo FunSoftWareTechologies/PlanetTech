@@ -19,6 +19,43 @@ PlanetTech is an open-source JavaScript library built using vanilla THREE.js, ac
 
 What sets this library apart is its utilization of the GPU for all tasks. This includes generating textures for each facet, performing displacement, and shaping PlaneGeometries into spherical forms; the entire process occurs on the GPU. Consequently, there is no need for WebWorkers at this stage.
 
+
+```javascript
+
+  let cubeUrls = [
+    new URL('./textuers/color/right_color_image.png',window.location.origin).href,
+    new URL('./textuers/color/left_color_image.png',window.location.origin).href,
+    new URL('./textuers/color/top_color_image.png',window.location.origin).href,
+    new URL('./textuers/color/bottom_color_image.png',window.location.origin).href,
+    new URL('./textuers/color/front_color_image.png', window.location.origin).href,
+    new URL('./textuers/color/back_color_image.png' ,window.location.origin).href, ]
+  const texture = new THREE.CubeTextureLoader() .load( cubeUrls )
+  const cubetexture = cubeTexture(texture,THREE.positionLocal)
+  
+  let planet = new Planet()
+  planet.initSphere({
+    offset:1/1.5 ,
+    levels:6,
+    size:15,
+    radius:15,
+    resolution:10,
+    dimension:5
+  })
+  planet.primitive.infrastructure.config.material.colorNode = cubetexture
+
+  planet.setEvents ('afterMeshCreation',[(node)=>{ }])
+  planet.setEvents ('loadTexture',[()=>{}])
+  planet.setEvents ('afterSpatialNodeCreation',[(node)=>{ node.add(box3Mesh(node.boundingInfo.boundingBox,new THREE.Color( Math.random() * 0xffffff ))) }])
+
+  planet.create()
+  scene.add(planet)
+
+  animate=()=>{
+    planet.primitive.update(camera)
+    renderer.render(scene,camera)
+  }
+```
+
 ## Getting Started
 To run the basic example:
 ```
