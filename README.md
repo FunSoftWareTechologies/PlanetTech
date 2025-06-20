@@ -8,7 +8,7 @@ This is the [official demo](https://interstellarjs.github.io/PlanetTech/examples
 </p>
 
 
-## Goal
+## Motivation
 
 This video served as the motivation for the project. I would like to design a system/toolkit that gets as close as possible to what is demoed.
 
