@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import * as TSL   from 'three/tsl'
 import * as THREEWEBGPU from 'three/webgpu'
 import { EventManager } from './eventManager.js'
+import { sheen } from 'three/tsl'
 
 export const setDefaultEvents = () =>{
  return [
@@ -15,6 +16,7 @@ export const setDefaultEvents = () =>{
 export class Infrastructure {
 
   constructor(config = {}) {
+
     let shardedData = {
       maxLevelSize:1,
       minLevelSize:1,
@@ -26,15 +28,20 @@ export class Infrastructure {
       lodDistanceOffset: 1,
       displacmentScale:1,
       visibilityLayer:{hiddenLayer:1,visibleLayer:0},
-      material: new THREEWEBGPU.MeshStandardNodeMaterial({ color: new THREE.Color( Math.random()*0xffffff)}),
+      material: new THREE.MeshPhongMaterial({
+             
+            shininess: 10,
+            flatShading: false,
+            emissive: new THREE.Color(0x0a0a0a), // Add slight emissive to prevent pure black
+            emissiveIntensity: 1.0
+        }) 
      }
+
     this.config = Object.assign( shardedData, config )
- 
+
     this.events = new EventManager();
 
-    setDefaultEvents().forEach((event) => {
-      this.events.on(event.name, event.fn);
-    });
+    setDefaultEvents().forEach((event) => { this.events.on(event.name, event.fn) });
   }
 
   levels(numOflvls) {
@@ -67,7 +74,6 @@ export class Infrastructure {
       maxLevelIndexCount,
       maxLevelVertexCount,
       maxLevelInstanceCount,
-
     }
 
     this.config['maxPolyCount'] = polyPerLevel[polyPerLevel.length - 1]

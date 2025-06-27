@@ -19,39 +19,87 @@ PlanetTech is an open-source JavaScript library built using vanilla THREE.js, ac
 
  
 ```javascript
+let cubeUrls = [
+  new URL('./textuers/color/right_color_image.png',window.location.origin).href,
+  new URL('./textuers/color/left_color_image.png',window.location.origin).href,
+  new URL('./textuers/color/top_color_image.png',window.location.origin).href,
+  new URL('./textuers/color/bottom_color_image.png',window.location.origin).href,
+  new URL('./textuers/color/front_color_image.png', window.location.origin).href,
+  new URL('./textuers/color/back_color_image.png' ,window.location.origin).href, ]
 
-  let cubeUrls = [
-    new URL('./textuers/color/right_color_image.png',window.location.origin).href,
-    new URL('./textuers/color/left_color_image.png',window.location.origin).href,
-    new URL('./textuers/color/top_color_image.png',window.location.origin).href,
-    new URL('./textuers/color/bottom_color_image.png',window.location.origin).href,
-    new URL('./textuers/color/front_color_image.png', window.location.origin).href,
-    new URL('./textuers/color/back_color_image.png' ,window.location.origin).href, ]
-  const texture = new THREE.CubeTextureLoader() .load( cubeUrls )
-  const cubetexture = cubeTexture(texture,THREE.positionLocal)
+const texture =  new THREE.CubeTextureLoader() .load( cubeUrls )
+
+texture.colorSpace =  THREE.SRGBColorSpace
+
+let planet = new Planet()
+planet.initSphere({
+  offset:1/0.5 ,
+  levels:6,
+  size:1,
+  radius:16399.0,
+  resolution:50,
+  dimension:4
+})
+
+planet.primitive.infrastructure.config.material.onBeforeCompile = function(shader) {
   
-  let planet = new Planet()
-  planet.initSphere({
-    offset:1/1.5 ,
-    levels:6,
-    size:15,
-    radius:15,
-    resolution:10,
-    dimension:5
-  })
-  planet.primitive.infrastructure.config.material.colorNode = cubetexture
+  shader.uniforms.customTexture = { value: texture };
 
-  planet.setEvents ('afterMeshCreation',[(node)=>{ }])
-  planet.setEvents ('loadTexture',[()=>{}])
-  planet.setEvents ('afterSpatialNodeCreation',[(node)=>{ node.add(box3Mesh(node.boundingInfo.boundingBox,new THREE.Color( Math.random() * 0xffffff ))) }])
+  shader.vertexShader = shader.vertexShader.replace(
+      '#include <uv_pars_vertex>',
+      `
+      #include <uv_pars_vertex>
+      varying vec2 vCustomUv;
+      varying vec3 vPosition;
+      `
+  );
+          
+shader.vertexShader = shader.vertexShader.replace(
+        '#include <uv_vertex>',
+        `
+        #include <uv_vertex>
+        vCustomUv = uv;
+        vPosition = position;
+        `
+    );
 
-  planet.create()
-  scene.add(planet)
+shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <common>',
+      `
+      #include <common>
+      uniform samplerCube customTexture;
+      uniform vec3 customColor;
+      uniform float time;
+      varying vec2 vCustomUv;
+      varying vec3 vPosition;
+      `
+  );
+          
+          
+shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <map_fragment>',
+      `
+      vec4 texColor = textureCube(customTexture, vPosition);
+      diffuseColor *= texColor;
+      `
+  );
+          
+  planet.primitive.infrastructure.config.material.userData.shader = shader;
+};
+      
+planet.setEvents ('afterMeshCreation',[(node)=>{ }])
+planet.setEvents ('loadTexture',[()=>{}])
+planet.setEvents ('afterSpatialNodeCreation',[(node)=>{ node.add(box3Mesh(node.boundingInfo.boundingBox,new THREE.Color( Math.random() * 0xffffff ))) }])
 
-  animate=()=>{
-    planet.primitive.update(camera)
-    renderer.render(scene,camera)
-  }
+planet.create()
+
+
+scene.add( planet)
+
+animate = () => {
+  planet.primitive.update(camera);
+  renderer.render(scene, camera);
+};
 ```
 
 ## Getting Started
@@ -73,11 +121,11 @@ Copy the coi-serviceworker.js file from ./examples and paste it in the root dire
 then link to it. Afterward, run the following commands.
 ```
 $ cd ./to/your/projects/root
-$ git clone https://github.com/InterstellarJS/PlanetTech.git
+$ git clone https://github.com/FunSoftWareTechologies/PlanetTech.git
 $ cd PlanetTech
 $ npm link
 $ cd ..
-$ npm link @interstellar-js-core/planettech && npm install
+$ npm link @funsoftware/planettech 
 ```
 
 

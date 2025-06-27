@@ -17,7 +17,7 @@
   "author": "Miguel Myers",
   "license": "ISC",
   "peerDependencies": {
-    "three": "0.172.0"
+    "three": "0.177.0"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",
