@@ -29,10 +29,9 @@ export class Infrastructure {
       displacmentScale:1,
       visibilityLayer:{hiddenLayer:1,visibleLayer:0},
       material: new THREE.MeshPhongMaterial({
-             
             shininess: 10,
             flatShading: false,
-            emissive: new THREE.Color(0x0a0a0a), // Add slight emissive to prevent pure black
+            emissive: new THREE.Color(0x0a0a0a), 
             emissiveIntensity: 1.0
         }) 
      }

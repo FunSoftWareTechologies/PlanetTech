@@ -1,14 +1,15 @@
 import * as THREE from 'three'
 import { Primitive } from "./primitive.js"
+import { isSphere }  from './../utils/primitiveUtils.js'
 
 export class BatchedPrimitive extends Primitive{
     static __type = 'BatchedPrimitive'
   
-    constructor(primitive,params){
+    constructor(type,params){
       
       super(params)
-  
-       this.constructor.__type = primitive.__type // dont like the idea this redefines what the actual type is
+
+      this.constructor.__type = type // dont like the idea this redefines what the actual type is / hardcode for now
   
       if(isSphere(this)) this.infrastructure.config.radius = params.radius
       
@@ -16,7 +17,7 @@ export class BatchedPrimitive extends Primitive{
   
     createDimensions(){
   
-      let batchedMesh = new THREE.BatchedMesh(0,0,0, new THREE.MeshStandardMaterial())
+      let batchedMesh = new THREE.BatchedMesh(1,1,1, this.infrastructure.config.material)
   
       this._transferGeometry(batchedMesh)
   
@@ -40,14 +41,16 @@ export class BatchedPrimitive extends Primitive{
   
       let polyPerLevel = this.infrastructure.config.levels.polyPerLevel
   
-      this.infrastructure.on('afterMeshCreation', ( node, payload ) => {
+      this.infrastructure.events.on('afterMeshCreation', ( node, payload ) => {
    
         const parent = node.parent;
   
         parent.remove( node );
   
         const geometry  = node.mesh().geometry 
-  
+
+        const material  = node.mesh().material 
+
         const depth     = node.params.depth 
   
         const vertex    = polyPerLevel[depth] 
@@ -77,10 +80,29 @@ export class BatchedPrimitive extends Primitive{
         batchedMesh.setMatrixAt( id, matrix );
   
         batchedMesh.setColorAt ( id, new THREE.Color( Math.random() * 0xffffff ) )
+
+        geometry.dispose() // might need this when phyics engine works
+        
+        material.dispose()
   
       }) 
-  
     }
-  
   }
   
+//example usage
+  /*
+  let planet2  = new BatchedPrimitive(122,{
+  offset:1/0.5 ,
+  levels:1,
+  size:1,
+  radius:10.0,
+  resolution:50,
+  dimension:10
+})
+planet2.infrastructure.config.lodDistanceOffset = 1
+planet2.createQuadTree({levels:1})
+      
+ planet2.createMeshNodes()
+
+planet2.createDimensions()
+  */
