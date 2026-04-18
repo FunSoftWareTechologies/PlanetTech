@@ -1,5 +1,3 @@
-
-
 export const initializationData = (i_, j_, k) =>{
   return  [
       {offset: [i_, -j_,  k ], direction:'+z', matrixRotationData: {propMehtod:'',input:0}},
