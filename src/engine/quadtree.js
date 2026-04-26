@@ -1,7 +1,5 @@
- 
 import * as THREE from 'three'
-import { Blueprint } from '../system/bluePrint.js'
- 
+
 
 function cornersFromRect(width, height, center) {
     const hw = width  / 2;
@@ -78,13 +76,15 @@ export class SpatialNode extends THREE.Object3D{
       this.worldData.points = [A, B, C, D]
       this.worldData.box    = new THREE.Box3().setFromPoints(this.worldData.points);
     }
+
+    return this
   }
 
-  drawWorldBox(){
-    const color  = new THREE.Color(Math.random(),Math.random(),Math.random());
+  drawWorldBox(color = new THREE.Color(Math.random(),Math.random(),Math.random())){
     const helper = new THREE.Box3Helper(this.worldData.box, color);
     this.add(helper);
     this.userData.debugBounds = helper;
+    return this
   }
 
   /*drawMesh(material){
@@ -125,11 +125,7 @@ export class QuadTree extends THREE.Object3D {
 
     const spatialNode = new SpatialNode(rootBounds, numOfLvls, matrix, direction, idx) 
      
-    const size = spatialNode.bounds.getSize(new THREE.Vector3());
-     
-    const geometry = this.blueprint.config.arraybuffers[size.x].geometryData.geometry
-
-    this.blueprint.config.nodeCreated(spatialNode,{geometry}) 
+    this.blueprint.config.nodeCreated(spatialNode,this.blueprint) 
 
     this.add(spatialNode)
 
@@ -165,36 +161,3 @@ export class QuadTree extends THREE.Object3D {
   }
  
 }
-
-
-export class QuadPrimitive extends QuadTree { 
-
-  constructor( params ) { 
-
-    const bluePrint = new Blueprint(params)
-
-    super( bluePrint ) 
-
-    this.createDimensions([0])
-
-  } 
-
-}
-
-export class CubePrimitive extends QuadTree { 
-
-  constructor( params ) { 
-
-    const bluePrint = new Blueprint(params)
-
-    super( bluePrint ) 
-
-    this.createDimensions([0,1,2,3,4,5])
-
-  } 
-
-}
-
- 
-
-

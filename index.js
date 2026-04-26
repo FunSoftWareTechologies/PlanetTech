@@ -1,8 +1,10 @@
 
-export * from './src/engine/primitives/primitive.js';
+export * from './src/engine/primitive.js';
  
   
- 
+ export * from './src/lib/material.js';
+
+ export * from './src/lib/mesh.js';
 
 //blueprint
-export * from './src/engine/system/bluePrint.js'
+export * from './src/system/bluePrint.js'
