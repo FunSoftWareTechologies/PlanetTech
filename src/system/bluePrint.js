@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { instance } from 'three/tsl'
 
 export function getMinLevelSize(size, levels){ return size / Math.pow(2, levels - 1) }
 
@@ -28,14 +29,14 @@ export class Blueprint {
       scale: new THREE.Vector3(1, 1, 1),
       lodDistanceOffset: 1,
       displacmentScale:1,
-      
+      instanceObject:{},
       nodeCreated,
       nodeDestroid
      } 
 
     this.levels(levels);
     this.createArrayBuffers();
-  }
+   }
 
   levels(numOflvls) {
     var levelsArray           = [];
@@ -65,8 +66,6 @@ export class Blueprint {
 
     this.config['maxResolution'] = resolutionPerLevel[resolutionPerLevel.length - 1]
   }
-
-
 
   createArrayBuffers(){
     for ( var i = 0; i < this.config.levels.numOflvls;  i++ ) {
@@ -143,12 +142,31 @@ export class Blueprint {
         new THREE.Vector3( k_,  k_, 0)
     );
 
-
-
     return {pos, direction, matrix, rootBounds}
 
   } 
 
+
+  useInstancing(num,material){
+
+    const arraybuffers = Object.entries(this.config.arraybuffers) 
+
+    this.config.levels.maxLevelInstanceCount.forEach( ( _count ,i ) => {
+
+      const geometry = arraybuffers[i][1].geometryData.geometry //todo ugly
+
+      const count = _count * num
+
+      const visibilityArray = (i === 0) ? new Float32Array(count).fill(1.0) : new Float32Array(count).fill(0.0);
+
+      const visibilityAttr  = new THREE.InstancedBufferAttribute(visibilityArray, 1);
+
+      geometry.setAttribute('instanceVisible', visibilityAttr);
+
+      this.config.instanceObject[ [ count ] ] = new THREE.InstancedMesh( geometry, material, count )
+
+    })
+  }
 
 
 }

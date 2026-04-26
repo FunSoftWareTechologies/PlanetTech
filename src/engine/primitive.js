@@ -5,13 +5,17 @@ import { QuadTree } from './quadtree.js'
  
 export class QuadPrimitive extends QuadTree { 
 
-  constructor( params ) { 
+  constructor( params,material ) { 
 
     const bluePrint = new Blueprint(params)
 
+    const count = [0]
+
+    bluePrint.useInstancing(count.length,material)
+
     super( bluePrint ) 
 
-    this.createDimensions([0])
+    this.createDimensions(count)
 
   } 
 
@@ -19,13 +23,17 @@ export class QuadPrimitive extends QuadTree {
 
 export class CubePrimitive extends QuadTree { 
 
-  constructor( params ) { 
+  constructor( params, material) { 
 
     const bluePrint = new Blueprint(params)
 
+    const count = [0,1,2,3,4,5]
+
+    bluePrint.useInstancing(count.length,material)
+
     super( bluePrint ) 
 
-    this.createDimensions([0,1,2,3,4,5])
+    this.createDimensions(count)
 
   } 
 

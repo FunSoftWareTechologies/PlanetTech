@@ -1,56 +1,41 @@
 import * as THREE from 'three'
 import { CubePrimitive } from "../engine/primitive.js"
  
-export class SphereMesh extends THREE.BatchedMesh{
+export class SphereMesh extends THREE.Object3D{
      
   
     constructor(params,material){
       
       // cant call super(0,0,0) i get a warning and it fails
 
-      super(1,1,1,material)
+      super( )
 
-        this.__maxInstanceCount = 0
-  
-        this.__maxVertexCount   = 0
-  
-        this.__maxIndexCount    = 0
-  
+      this.count = 0
+
       const nodeCreated  = params.nodeCreated
      
       params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
 
-      this.primitive = new CubePrimitive(params)
+      this.primitive = new CubePrimitive(params,material)
 
-      this.add(this.primitive)
+      this.add(this.primitive,...Object.values(this.primitive.blueprint.config.instanceObject))
+      
      }
 
     draw(node,blueprint){
 
-        const size = node.bounds.getSize(new THREE.Vector3())
+      const size = node.bounds.getSize(new THREE.Vector3())
 
-        const geometry = blueprint.config.arraybuffers[size.x].geometryData.geometry 
+      //todo ugly
 
-        const vertexCount = geometry.attributes.position.count;
+      const idx = Object.keys(blueprint.config.arraybuffers).indexOf(String(size.x))
+ 
+      const instnaceMesh = Object.values(blueprint.config.instanceObject)[idx]
+      
+      instnaceMesh.setMatrixAt(this.count, node.transformMatrix);
 
-        const indexCount  = geometry.index.count;
+      this.count +=1 
 
-        this.__maxInstanceCount += 1
-
-        this.__maxVertexCount   += vertexCount 
-    
-        this.__maxIndexCount    += indexCount 
-
-        this.setInstanceCount( this.__maxInstanceCount )
-  
-        this.setGeometrySize ( this.__maxVertexCount, this.__maxIndexCount )
-  
-        const geometryId = this.addGeometry( geometry );
-        
-        const id = this.addInstance( geometryId );
-
-        this.setMatrixAt( id, node.transformMatrix );
-  
     }
   
   }
