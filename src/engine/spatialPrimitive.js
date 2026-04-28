@@ -1,9 +1,9 @@
  
 import * as THREE from 'three'
 import { Blueprint } from '../system/bluePrint.js'
-import { QuadTree } from './quadtree.js'
+import { QuadTree } from './spatialStructure.js'
  
-export class QuadPrimitive extends QuadTree { 
+export class QuadSpatialPrimitive extends QuadTree { 
 
   constructor( params,material ) { 
 
@@ -21,7 +21,7 @@ export class QuadPrimitive extends QuadTree {
 
 }
 
-export class CubePrimitive extends QuadTree { 
+export class CubeSpatialPrimitive extends QuadTree { 
 
   constructor( params, material) { 
 

@@ -149,7 +149,7 @@ export class Blueprint {
 
   useInstancing(num,material){
 
-    const arraybuffers = Object.entries(this.config.arraybuffers) 
+    const arraybuffers = Object.entries(this.config.arraybuffers).reverse() 
 
     this.config.levels.maxLevelInstanceCount.forEach( ( _count ,i ) => {
 
@@ -163,10 +163,12 @@ export class Blueprint {
 
       geometry.setAttribute('instanceVisible', visibilityAttr);
 
-      this.config.instanceObject[ [ count ] ] = new THREE.InstancedMesh( geometry, material, count )
+      console.log(count)
+
+      this.config.instanceObject[ [ count ] ] = new THREE.InstancedMesh( geometry, material.clone(), count )
 
     })
+    
   }
-
 
 }

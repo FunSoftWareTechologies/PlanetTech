@@ -27,7 +27,7 @@ function projectCornersOnSphere(A, B, C, D, radius) {
     return { pA, pB, pC, pD, pM };
 }
 
-export class SpatialNode extends THREE.Object3D{
+class SpatialQuadTreeNode extends THREE.Object3D{
 
   constructor(
     bounds, 
@@ -123,7 +123,7 @@ export class QuadTree extends THREE.Object3D {
 
   #_createNode(rootBounds, numOfLvls, matrix, direction, idx){ 
 
-    const spatialNode = new SpatialNode(rootBounds, numOfLvls, matrix, direction, idx) 
+    const spatialNode = new SpatialQuadTreeNode(rootBounds, numOfLvls, matrix, direction, idx) 
      
     this.blueprint.config.nodeCreated(spatialNode,this.blueprint) 
 
@@ -160,4 +160,85 @@ export class QuadTree extends THREE.Object3D {
     }
   }
  
+}
+
+
+
+class OcTreeNode extends THREE.Object3D{
+
+  constructor(box,depth,maxDepth,capacity){
+    super()
+    this.box      = box 
+    this.depth    = depth 
+    this.maxDepth = maxDepth
+    this.capacity = capacity
+    this.items    = []
+    this.children = null 
+  }
+
+    insert(item){
+       
+      this.items.push(item)
+    }
+
+}
+
+
+export class OcTree extends THREE.Object3D{
+
+  constructor(box,depth,maxDepth,capacity){
+    super()
+
+    this.ocTreeNode = new OcTreeNode(box,depth,maxDepth,capacity)
+
+    this._frustum   = new THREE.Frustum();
+
+    this._pMat      = new THREE.Matrix4();
+
+    this. _scratchBox  = new THREE.Box3();
+
+    this. _sphere      = new THREE.Sphere();
+
+  }
+
+  insert(item){
+  this.ocTreeNode.insert(item)
+  }
+
+  queryFrustrum(pp,camera,out){
+ 
+
+    camera.updateMatrixWorld();
+    this._pMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    this._frustum.setFromProjectionMatrix(this._pMat);
+
+    const groupWorldMatrix = pp.matrixWorld;
+
+
+
+    for (const it of this.ocTreeNode.items){
+          this. _scratchBox.copy(it.wb).applyMatrix4(groupWorldMatrix);
+    this.  _scratchBox.getBoundingSphere(this._sphere);
+      const x  = it.i 
+      if (!this._frustum.intersectsSphere(this._sphere)){ 
+
+      
+
+         const g = Object.values( pp.primitive.blueprint.config.instanceObject)[0]
+ const at = g.geometry.getAttribute('instanceVisible')
+ 
+ at.needsUpdate = true;
+   
+   at.array[x] = 0
+ 
+      } 
+
+       
+
+ 
+
+
+    }
+  }
+
 }

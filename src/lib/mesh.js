@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { CubePrimitive } from "../engine/primitive.js"
+import { CubeSpatialPrimitive } from "../engine/spatialPrimitive.js"
  
 export class SphereMesh extends THREE.Object3D{
      
@@ -14,9 +14,9 @@ export class SphereMesh extends THREE.Object3D{
 
       const nodeCreated  = params.nodeCreated
      
-      params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
+      params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this );  this.count +=1  }
 
-      this.primitive = new CubePrimitive(params,material)
+      this.primitive = new CubeSpatialPrimitive(params,material)
 
       this.add(this.primitive,...Object.values(this.primitive.blueprint.config.instanceObject))
       
@@ -28,13 +28,13 @@ export class SphereMesh extends THREE.Object3D{
 
       //todo ugly
 
-      const idx = Object.keys(blueprint.config.arraybuffers).indexOf(String(size.x))
+      const idx = Object.keys(blueprint.config.arraybuffers).reverse().indexOf(String(size.x))
  
       const instnaceMesh = Object.values(blueprint.config.instanceObject)[idx]
       
       instnaceMesh.setMatrixAt(this.count, node.transformMatrix);
 
-      this.count +=1 
+      
 
     }
   
