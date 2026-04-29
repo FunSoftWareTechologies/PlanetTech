@@ -230,13 +230,21 @@ export class OcTree extends THREE.Object3D{
  at.needsUpdate = true;
    
    at.array[x] = 0
+
+   
  
-      } 
+      } else{
 
        
 
+         const g = Object.values( pp.primitive.blueprint.config.instanceObject)[0]
+ const at = g.geometry.getAttribute('instanceVisible')
  
-
+ at.needsUpdate = true;
+   
+   at.array[x] = 1
+ 
+}
 
     }
   }

@@ -6,8 +6,6 @@ export class SphereMesh extends THREE.Object3D{
   
     constructor(params,material){
       
-      // cant call super(0,0,0) i get a warning and it fails
-
       super( )
 
       this.count = 0
@@ -34,26 +32,7 @@ export class SphereMesh extends THREE.Object3D{
       
       instnaceMesh.setMatrixAt(this.count, node.transformMatrix);
 
-      
-
     }
   
   }
   
-//example usage
-  /*
-  let planet2  = new BatchedPrimitive(122,{
-  offset:1/0.5 ,
-  levels:1,
-  size:1,
-  radius:10.0,
-  resolution:50,
-  dimension:10
-})
-planet2.infrastructure.config.lodDistanceOffset = 1
-planet2.createQuadTree({levels:1})
-      
- planet2.createMeshNodes()
-
-planet2.createDimensions()
-  */
