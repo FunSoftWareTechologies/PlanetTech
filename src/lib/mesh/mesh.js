@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { CubePrimitive,QuadPrimitive } from "../../engine/spatialObjects/spatialPrimitive.js"
  
+ 
 export class Mesh extends THREE.BatchedMesh{
      
   constructor( params, material, primitive){
@@ -50,6 +51,12 @@ export class Mesh extends THREE.BatchedMesh{
     const id = this.addInstance( geometryId );
 
     this.setMatrixAt( id, node.transformMatrix );
+
+  }
+
+  onBeforeRender( renderer, scene, camera, geometry, material, group ) {
+
+    super.onBeforeRender( renderer, scene, camera, geometry, material, group )
 
   }
   

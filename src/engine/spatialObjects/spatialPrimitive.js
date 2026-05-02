@@ -2,31 +2,40 @@
 import * as THREE from 'three'
 import { Blueprint } from './bluePrint.js'
 import { QuadTree } from './spatialStructure.js'
- 
-export class QuadPrimitive extends QuadTree { 
 
-  constructor( params ) { 
+
+export class Primitive extends QuadTree { 
+
+  constructor( params, list = [], depth = 0 ) { 
 
     const bluePrint = new Blueprint(params)
 
     super( bluePrint ) 
 
-    this.createDimensions([0])
+    this.createDimensions(list, depth)
 
   } 
 
 }
+ 
+export class QuadPrimitive extends Primitive { 
 
-export class CubePrimitive extends QuadTree { 
+  constructor( params ) {  
+    
+    super( params, [0] , 0) 
+  
+  } 
 
-  constructor( params ) { 
+}
 
-    const bluePrint = new Blueprint(params)
+export class CubePrimitive extends Primitive { 
 
-    super( bluePrint ) 
+  constructor( params ) {  
 
-    this.createDimensions([0,1,2,3,4,5])
-
+    const { size: w, dimension: d  } = params
+    
+    super( params, [0,1,2,3,4,5] , (w / 2) * d ) 
+  
   } 
 
 }

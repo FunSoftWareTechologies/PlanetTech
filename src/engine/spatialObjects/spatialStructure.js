@@ -114,9 +114,7 @@ export class QuadTree extends THREE.Object3D {
     this.rootNodes = new Map();
 
     this.blueprint = blueprint
-
-    this.createDimensions([])
-
+ 
   }
 
    
@@ -134,9 +132,9 @@ export class QuadTree extends THREE.Object3D {
   }
 
   
-  createDimensions(faceIdxArray){ 
+  createDimensions(faceIdxArray, depth){ 
     const { maxLevelSize: w, dimensions: d, scale: s } = this.blueprint.config;
-    const k_ = (w / 2) * d;
+    const k_ = depth
     const numOfLvls = this.blueprint.config.levels.numOflvls - 1
 
     for (let i = 0; i < d; i++) {
