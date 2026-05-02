@@ -1,12 +1,10 @@
 
-export * from './src/engine/spatialPrimitive.js';
+export * from './src/engine/spatialObjects/spatialPrimitive.js';
 
-export * from './src/engine/spatialStructure.js';
+export * from './src/engine/spatialObjects/spatialStructure.js';
 
-  
-export * from './src/lib/material.js';
+export * from './src/lib/materials/material.js';
 
-export * from './src/lib/mesh.js';
+export * from './src/lib/mesh/mesh.js';
 
-//blueprint
-export * from './src/system/bluePrint.js'
+export * from './src/engine/spatialObjects/bluePrint.js'

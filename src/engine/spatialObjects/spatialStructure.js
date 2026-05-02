@@ -224,25 +224,14 @@ export class OcTree extends THREE.Object3D{
 
       
 
-         const g = Object.values( pp.primitive.blueprint.config.instanceObject)[0]
- const at = g.geometry.getAttribute('instanceVisible')
- 
- at.needsUpdate = true;
-   
-   at.array[x] = 0
+ pp.setVisibleAt(x,false)
 
    
  
       } else{
 
        
-
-         const g = Object.values( pp.primitive.blueprint.config.instanceObject)[0]
- const at = g.geometry.getAttribute('instanceVisible')
- 
- at.needsUpdate = true;
-   
-   at.array[x] = 1
+ pp.setVisibleAt(x,true)
  
 }
 
