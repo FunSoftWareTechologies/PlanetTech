@@ -1,10 +1,9 @@
 import * as THREE from 'three'
 import { CubePrimitive,QuadPrimitive } from "../../engine/spatialObjects/spatialPrimitive.js"
  
- 
 export class Mesh extends THREE.BatchedMesh{
      
-  constructor( params, material, primitive){
+  constructor( params, material, primitive ){
 
     // cant call super(0,0,0) i get a warning and it fails
 
@@ -20,9 +19,23 @@ export class Mesh extends THREE.BatchedMesh{
 
     this.__maxIndexCount    = 0
 
+
+    this._frustum   = new THREE.Frustum();
+
+    this._pMat      = new THREE.Matrix4();
+
+    this._scratchBox  = new THREE.Box3();
+
+    this._sphere      = new THREE.Sphere();
+
+
     this.primitive = primitive
 
     this.updateWorldMatrix(true, false);
+
+    const nodeCreated  = params.nodeCreated
+    
+    params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
  
   }
 
@@ -56,7 +69,22 @@ export class Mesh extends THREE.BatchedMesh{
 
   onBeforeRender( renderer, scene, camera, geometry, material, group ) {
 
+    this.queryFrustum( camera )
+
     super.onBeforeRender( renderer, scene, camera, geometry, material, group )
+
+  }
+
+  queryFrustum( camera ){
+ 
+    /*camera.updateMatrixWorld();
+
+    this._pMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+
+    this._frustum.setFromProjectionMatrix(this._pMat);
+
+    const groupWorldMatrix = this.matrixWorld;
+    */
 
   }
   
@@ -68,10 +96,6 @@ export class SphereMesh extends Mesh{
   constructor(params,material){
     
     super(params,material)
-
-    const nodeCreated  = params.nodeCreated
-    
-    params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
 
     this.primitive = new CubePrimitive(params)
 
@@ -87,10 +111,6 @@ export class QuadMesh extends Mesh{
   constructor(params,material){
     
     super(params,material)
-
-    const nodeCreated  = params.nodeCreated
-    
-    params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
 
     this.primitive = new QuadPrimitive(params)
 
