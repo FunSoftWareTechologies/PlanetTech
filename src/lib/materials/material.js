@@ -12,6 +12,9 @@ import * as THREE from 'three'
 
       //inject uniforms
  
+
+      void vertMain(){}
+
       void main() {
 
         #include <batching_vertex>   
@@ -20,6 +23,8 @@ import * as THREE from 'three'
 
         //inject
  
+        vertMain();
+
         gl_Position = projectionMatrix * modelViewMatrix * world;
 
         #include <logdepthbuf_vertex>
@@ -30,9 +35,13 @@ import * as THREE from 'three'
       #include <common>
       #include <logdepthbuf_pars_fragment>
 
+      void fragMain(){}
+
       void main() {
 
         #include <logdepthbuf_fragment>
+
+        fragMain();
 
         gl_FragColor = vec4(vec3(1,0,1), 1.0);
       }
@@ -52,11 +61,15 @@ export class QuadMaterial extends THREE.ShaderMaterial{
 
 export class SphereMaterial extends THREE.ShaderMaterial{
 
-    constructor(params){
+    constructor( vertMain = 'void vertMain(){}', fragMain = 'void fragMain(){}' ){
 
-        vertexShader = vertexShader.replace('//inject uniforms',`uniform float radius;`)
+        vertexShader   = vertexShader.replace('//inject uniforms',`uniform float radius;`)
 
-        vertexShader = vertexShader.replace('//inject',`world = vec4(normalize(world.xyz) * radius, 1.0);`)
+        vertexShader   = vertexShader.replace('//inject',`world = vec4(normalize(world.xyz) * radius, 1.0);`)
+
+        vertexShader   = vertexShader.replace('void vertMain(){}',vertMain )
+
+        fragmentShader = fragmentShader.replace('void fragMain(){}',fragMain )
 
         super({fragmentShader,vertexShader,uniforms:{radius:{value:1}}})
 

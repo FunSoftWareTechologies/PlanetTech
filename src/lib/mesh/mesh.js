@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { CubePrimitive,QuadPrimitive } from "../../engine/spatialObjects/spatialPrimitive.js"
+import { SphereMaterial, QuadMaterial } from '../materials/material.js';
  
 export class Mesh extends THREE.BatchedMesh{
      
@@ -93,9 +94,9 @@ export class Mesh extends THREE.BatchedMesh{
 
 export class SphereMesh extends Mesh{
     
-  constructor(params,material){
+  constructor(params){
     
-    super(params,material)
+    super(params,new SphereMaterial())
 
     this.primitive = new CubePrimitive(params)
 
@@ -108,9 +109,9 @@ export class SphereMesh extends Mesh{
 
 export class QuadMesh extends Mesh{
     
-  constructor(params,material){
+  constructor(params){
     
-    super(params,material)
+    super(params,new QuadMaterial())
 
     this.primitive = new QuadPrimitive(params)
 
