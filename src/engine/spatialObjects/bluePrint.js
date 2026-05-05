@@ -17,7 +17,8 @@ export class Blueprint {
      
     const nodeCreated  = params.nodeCreated  = params.nodeCreated  || ((node,payLoad)=>{})
     const nodeDestroid = params.nodeDestroid = params.nodeDestroid || ((node,payLoad)=>{})
- 
+    const nodeUpdated  = params.nodeUpdated  = params.nodeUpdated  || ((node,payLoad)=>{})
+
      this.config = {
       maxLevelSize:size,
       minLevelSize:getMinLevelSize(size, levels),
@@ -28,9 +29,9 @@ export class Blueprint {
       scale: new THREE.Vector3(1, 1, 1),
       lodDistanceOffset: 1,
       displacmentScale:1,
-      
       nodeCreated,
-      nodeDestroid
+      nodeDestroid,
+      nodeUpdated
      } 
 
     this.levels(levels);

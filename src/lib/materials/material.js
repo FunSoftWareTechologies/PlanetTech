@@ -41,9 +41,11 @@ import * as THREE from 'three'
 
         #include <logdepthbuf_fragment>
 
+        vec4 worldColor = vec4(0.,0.,0.,1.);
+
         fragMain();
 
-        gl_FragColor = vec4(vec3(1,0,1), 1.0);
+        gl_FragColor = worldColor;
       }
     `;
  

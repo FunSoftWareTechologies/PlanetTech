@@ -6,11 +6,11 @@ import { QuadTree } from './spatialStructure.js'
 
 export class Primitive extends QuadTree { 
 
-  constructor( params, list = [], depth = 0 ) { 
+  constructor( config, callBacks, list = [], depth = 0 ) { 
 
-    const bluePrint = new Blueprint(params)
+    const bluePrint = new Blueprint(config)
 
-    super( bluePrint ) 
+    super( bluePrint, callBacks ) 
 
     this.createDimensions(list, depth)
 
@@ -20,9 +20,9 @@ export class Primitive extends QuadTree {
  
 export class QuadPrimitive extends Primitive { 
 
-  constructor( params ) {  
+  constructor( config, callBacks ) {  
     
-    super( params, [0] , 0) 
+    super( config, callBacks, [0] , 0) 
   
   } 
 
@@ -30,11 +30,11 @@ export class QuadPrimitive extends Primitive {
 
 export class CubePrimitive extends Primitive { 
 
-  constructor( params ) {  
+  constructor( config, callBacks ) {  
 
-    const { size: w, dimension: d  } = params
+    const { size: w, dimension: d  } = config
     
-    super( params, [0,1,2,3,4,5] , (w / 2) * d ) 
+    super( config, callBacks, [0,1,2,3,4,5] , (w / 2) * d ) 
   
   } 
 

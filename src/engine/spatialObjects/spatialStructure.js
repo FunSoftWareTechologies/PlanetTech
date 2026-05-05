@@ -1,143 +1,135 @@
 import * as THREE from 'three'
 
-
-export class OctreeNode {
-  /**
-   * @param {THREE.Vector3} center - Center point of this node
-   * @param {number} size - Base dimension size of the node
-   * @param {number} depth - Current tree depth
-   * @param {number} maxDepth - Maximum allowed splits
-   * @param {number} capacity - Items before splitting
-   * @param {number} looseness - Expansion factor (e.g. 1.5 = 50% larger loose bounds)
-   */
-  constructor(center, size, depth, maxDepth, capacity, looseness = 1.25) {
-    this.center = center.clone();
-    this.size = size;
-    this.depth = depth;
-    this.maxDepth = maxDepth;
-    this.capacity = capacity;
-    this.looseness = looseness;
-
-    this.items = [];
-    this.children = null;
-
-    // Calculate Strict Bounds: For visual representation of the perfect grid
-    const strictHalf = this.size / 2;
-    this.strictBox = new THREE.Box3(
-      new THREE.Vector3(center.x - strictHalf, center.y - strictHalf, center.z - strictHalf),
-      new THREE.Vector3(center.x + strictHalf, center.y + strictHalf, center.z + strictHalf)
-    );
-
-    // Calculate Loose Bounds: Used for intersection testing and insertion
-    // By making the bounds larger than the strict size, objects can straddle 
-    // the mathematical center without breaking the tree.
-    const looseHalf = (this.size / 2) * this.looseness;
-    this.looseBox = new THREE.Box3(
-      new THREE.Vector3(center.x - looseHalf, center.y - looseHalf, center.z - looseHalf),
-      new THREE.Vector3(center.x + looseHalf, center.y + looseHalf, center.z + looseHalf)
-    );
-  }
-
- 
-  insert(item) {
-    this.items.push(item)
-  }
-
- 
-  queryFrustum(frustum, onIntersectCallback) {
- 
-  }
-
- 
-  traverse(callback) {
-
-     
-      callback(this)
-      if(this.children)
-      this.children.forEach(c=>c.traverse(callBack(c)))
-    
- 
-  }
-
-  _split() {
-    this.children = [];
-    const quarter = this.size / 4;
-    const childSize = this.size / 2;
-
-    for (let i = 0; i < 8; i++) {
-      // Bitwise check to calculate the 8 different octant offsets
-      const offsetX = (i & 1) ? quarter : -quarter;
-      const offsetY = (i & 2) ? quarter : -quarter;
-      const offsetZ = (i & 4) ? quarter : -quarter;
-
-      const childCenter = new THREE.Vector3(
-        this.center.x + offsetX,
-        this.center.y + offsetY,
-        this.center.z + offsetZ
-      );
-
-      this.children.push(
-        new OctreeNode(childCenter, childSize, this.depth + 1, this.maxDepth, this.capacity, this.looseness)
-      );
+export class EventManager extends THREE.Object3D{
+    constructor() {
+      super()
+      this.eventHandlers = new Map(); 
+    }
+  
+    on(event, handler) {
+      if (!this.eventHandlers.has(event)) {
+        this.eventHandlers.set(event, []);
+      }
+      if(Array.isArray(handler))
+        {
+          this.eventHandlers.get(event).push(...handler)
+        }else{
+          this.eventHandlers.get(event).push(handler);
+        }
+       
+    }
+  
+    trigger(event, ...args) {
+      if (this.eventHandlers.has(event)) {
+        this.eventHandlers.get(event).forEach((handler) => handler(...args));
+      }
     }
   }
+
+class Node extends THREE.Object3D{
+  constructor(eventObject){
+    super()
+    this.events = new EventManager()
+    Object.entries(eventObject).forEach(entrie=>{this.events.on(entrie[0],entrie[1])})
+     
+  }
+}
+
+
+export class OctreeNode extends Node{
+
+  constructor(config,callBacks) {
+
+    super(callBacks)
+
+    const {center, size, depth, maxDepth, capacity, looseness } = this.config = config
+
+    const _center = center.clone();
+ 
+    this.items = [];
+
+    this.children = [];
+
+    const strictHalf = this.size / 2;
+    this.strictBox = new THREE.Box3(
+      new THREE.Vector3(_center.x - strictHalf, _center.y - strictHalf, _center.z - strictHalf),
+      new THREE.Vector3(_center.x + strictHalf, _center.y + strictHalf, _center.z + strictHalf)
+    );
+
+    const looseHalf = (this.size / 2) * this.looseness;
+    this.looseBox = new THREE.Box3(
+      new THREE.Vector3(_center.x - looseHalf, _center.y - looseHalf, _center.z - looseHalf),
+      new THREE.Vector3(_center.x + looseHalf, _center.y + looseHalf, _center.z + looseHalf)
+    );
+
+    this.events.trigger("nodeCreated",this) 
+  }
+
+  insert(item) {}
+
+  queryFrustum(frustum, onIntersectCallback) {}
+
+  traverse(callback) {}
+
+  split() { }
 }
 
 export class OcTree extends THREE.Object3D{
 
-  constructor(center, size, depth, maxDepth, capacity, looseness){
+  constructor(config,callBacks){
     super()
 
-    this.items = [] //todo make weakrefs
+    this.dynamicItems = new Set()
 
-    this.ocTreeNode = new OctreeNode(center, size, depth, maxDepth, capacity, looseness)
+    this.staticItems  = new Set()
 
+    this.ocTreeNode = new OctreeNode(config,callBacks)
   }
 
   insert( item ){
 
-    this.items.push(item)
+    item.dynamic ? this.dynamicItems.add(item) : this.staticItems.add(item)
 
-    item.i = this.items.length
+    const items = this.dynamicItems.union(this.staticItems) // todo 
 
     if(!this.ocTreeNode.looseBox.containsBox(item.bounds)){
 
       const totalBound = new THREE.Box3()
       
-      this.items.forEach(it=>totalBound.union(it.bounds)) 
+      items.forEach( it => totalBound.union( it.bounds ) ) 
 
       const center = totalBound.getCenter(new THREE.Vector3())
 
-      const size = totalBound.getSize(new THREE.Vector3())
+      const _size  = totalBound.getSize(new THREE.Vector3())
 
-      const amortizedSize = Math.max(size.x, size.y, size.z) * 1.5;
+      const size   = Math.max(_size.x, _size.y, _size.z) * 1.5;
 
-      this.ocTreeNode = new OctreeNode(
+      const prevNode = this.ocTreeNode
+
+      this.ocTreeNode = new OctreeNode({
         center, 
-        amortizedSize, 
-        0, 
-        this.ocTreeNode.maxDepth, 
-        this.ocTreeNode.capacity, 
-        this.ocTreeNode.looseness)
+        size, 
+        depth:0, 
+        maxDepth:     prevNode.config.maxDepth, 
+        capacity:     prevNode.config.capacity, 
+        looseness:    prevNode.config.looseness,
+        nodeCreated:  prevNode.config.nodeCreated
+      },
+      Object.fromEntries(prevNode.events.eventHandlers))
 
-      this.items.forEach(it=>this.ocTreeNode.insert(it))
+      items.forEach(it=>this.ocTreeNode.insert(it))
 
     }else{
 
       this.ocTreeNode.insert(item)
 
     }
-
   }
 
   traverse(callBack){
     this.ocTreeNode.traverse(callBack)
   }
-
 }
-
-
-
 
 function cornersFromRect(width, height, center) {
     const hw = width  / 2;
@@ -165,15 +157,18 @@ function projectCornersOnSphere(A, B, C, D, radius) {
     return { pA, pB, pC, pD, pM };
 }
 
-export class QuadTreeNode extends THREE.Object3D{
+export class QuadTreeNode extends Node{
 
   constructor(
     bounds, 
     level, 
     transformMatrix, 
     direction, 
-    index) {
-    super();
+    index,
+    callBacks) {
+
+    super(callBacks);
+
     this.bounds          = bounds;
     this.level           = level;
     this.transformMatrix = transformMatrix;
@@ -184,6 +179,8 @@ export class QuadTreeNode extends THREE.Object3D{
     this.isSubdivided    = false;
     this.disposeTimer    = null;
     this.worldData       = undefined
+
+    this.events.trigger("nodeCreated",this)
   }
 
   generateKey (position) {
@@ -218,9 +215,9 @@ export class QuadTreeNode extends THREE.Object3D{
     return this
   }
 
-  drawWorldBox(color = new THREE.Color(Math.random(),Math.random(),Math.random())){
+  drawWorldBox(scene,color = new THREE.Color(Math.random(),Math.random(),Math.random())){
     const helper = new THREE.Box3Helper(this.worldData.box, color);
-    this.add(helper);
+    scene.add(helper);
     this.userData.debugBounds = helper;
     return this
   }
@@ -230,22 +227,26 @@ export class QuadTreeNode extends THREE.Object3D{
 
 export class QuadTree extends THREE.Object3D {
 
-  constructor(blueprint) {
+  constructor(blueprint,callbacks) {
+
+    const nodeCreated = callbacks.nodeCreated
+
+    callbacks.nodeCreated = (node) => nodeCreated(node,blueprint)
 
     super()
 
     this.rootNodes = new Map();
 
     this.blueprint = blueprint
+
+    this.callBacks = callbacks
  
   }
 
   #_createNode(rootBounds, numOfLvls, matrix, direction, idx){ 
 
-    const spatialNode = new QuadTreeNode(rootBounds, numOfLvls, matrix, direction, idx) 
+    const spatialNode = new QuadTreeNode(rootBounds, numOfLvls, matrix, direction, idx, this.callBacks) 
      
-    this.blueprint.config.nodeCreated(spatialNode,this.blueprint) 
-
     this.add(spatialNode)
 
     return spatialNode

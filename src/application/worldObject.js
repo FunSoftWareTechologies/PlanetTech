@@ -8,8 +8,14 @@ export class WorldObject extends THREE.Mesh {
         super()
     }
 
-    initOctree( params ){
-        this.octree = new OcTree(params)
+    initOctree( config,callBacks ){
+        this.octree = new OcTree( config,callBacks)
+        return this
+    }
+
+    insert( bounds, dynamic = false ){
+        this.octree.insert({bounds,dynamic})  
+        return this     
     }
 
     initPhysics( ){

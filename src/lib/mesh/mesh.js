@@ -4,9 +4,7 @@ import { SphereMaterial, QuadMaterial } from '../materials/material.js';
  
 export class Mesh extends THREE.BatchedMesh{
      
-  constructor( params, material, primitive ){
-
-    // cant call super(0,0,0) i get a warning and it fails
+  constructor( callBacks, material, primitive ){
 
     super(1,1,1,material)
 
@@ -20,23 +18,21 @@ export class Mesh extends THREE.BatchedMesh{
 
     this.__maxIndexCount    = 0
 
+    this._frustum     = new THREE.Frustum();
 
-    this._frustum   = new THREE.Frustum();
-
-    this._pMat      = new THREE.Matrix4();
+    this._pMat        = new THREE.Matrix4();
 
     this._scratchBox  = new THREE.Box3();
 
     this._sphere      = new THREE.Sphere();
 
-
-    this.primitive = primitive
+    this.primitive    = primitive
 
     this.updateWorldMatrix(true, false);
 
-    const nodeCreated  = params.nodeCreated
+    const nodeCreated  = callBacks.nodeCreated
     
-    params.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
+    callBacks.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
  
   }
 
@@ -94,11 +90,11 @@ export class Mesh extends THREE.BatchedMesh{
 
 export class SphereMesh extends Mesh{
     
-  constructor(params){
+  constructor(config, callBacks){
     
-    super(params,new SphereMaterial())
+    super(callBacks,new SphereMaterial())
 
-    this.primitive = new CubePrimitive(params)
+    this.primitive = new CubePrimitive(config, callBacks)
 
     this.add(this.primitive)
 
@@ -109,11 +105,11 @@ export class SphereMesh extends Mesh{
 
 export class QuadMesh extends Mesh{
     
-  constructor(params){
+  constructor( config, callBacks ){
     
-    super(params,new QuadMaterial())
+    super(callBacks ,new QuadMaterial())
 
-    this.primitive = new QuadPrimitive(params)
+    this.primitive = new QuadPrimitive(config, callBacks)
 
     this.add(this.primitive)
 
