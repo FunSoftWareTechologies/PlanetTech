@@ -50,13 +50,14 @@ export class OctreeNode extends Node{
 
     this.children = [];
 
-    const strictHalf = this.size / 2;
+    const strictHalf = size / 2;
+
     this.strictBox = new THREE.Box3(
       new THREE.Vector3(_center.x - strictHalf, _center.y - strictHalf, _center.z - strictHalf),
       new THREE.Vector3(_center.x + strictHalf, _center.y + strictHalf, _center.z + strictHalf)
     );
 
-    const looseHalf = (this.size / 2) * this.looseness;
+    const looseHalf = (size / 2) * this.looseness;
     this.looseBox = new THREE.Box3(
       new THREE.Vector3(_center.x - looseHalf, _center.y - looseHalf, _center.z - looseHalf),
       new THREE.Vector3(_center.x + looseHalf, _center.y + looseHalf, _center.z + looseHalf)
@@ -65,7 +66,9 @@ export class OctreeNode extends Node{
     this.events.trigger("nodeCreated",this) 
   }
 
-  insert(item) {}
+  insert(item) {
+    
+  }
 
   queryFrustum(frustum, onIntersectCallback) {}
 
@@ -92,7 +95,9 @@ export class OcTree extends THREE.Object3D{
 
     const items = this.dynamicItems.union(this.staticItems) // todo 
 
-    if(!this.ocTreeNode.looseBox.containsBox(item.bounds)){
+    // WARNING very expensive shouldn't get called in a loop
+
+    if(!this.ocTreeNode.looseBox.containsBox(item.bounds)){  
 
       const totalBound = new THREE.Box3()
       
@@ -102,7 +107,7 @@ export class OcTree extends THREE.Object3D{
 
       const _size  = totalBound.getSize(new THREE.Vector3())
 
-      const size   = Math.max(_size.x, _size.y, _size.z) * 1.5;
+      const size   = Math.max(_size.x, _size.y, _size.z);
 
       const prevNode = this.ocTreeNode
 
