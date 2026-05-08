@@ -4,7 +4,7 @@ import { SphereMaterial, QuadMaterial } from '../materials/material.js';
  
 export class Mesh extends THREE.BatchedMesh{
      
-  constructor( params, material, primitive ){
+  constructor(material, primitive ){
 
     super(1,1,1,material)
 
@@ -25,8 +25,6 @@ export class Mesh extends THREE.BatchedMesh{
     this._scratchBox  = new THREE.Box3();
 
     this._sphere      = new THREE.Sphere();
-
-    this.params       = params
 
     this.primitive    = primitive
 
@@ -94,34 +92,54 @@ export class Mesh extends THREE.BatchedMesh{
 
   }
   
+  initPrimitive (primitive){
+     const nodeCreated  = this.callBacks._nodeCreated
+      this.callBacks._nodeCreated = ( node, policy ) => {nodeCreated(node, policy, this)  }
+      this.primitive = primitive
+      this.add(this.primitive) 
+    return this
+  }
+
 }
 
 
 export class SphereMesh extends Mesh{
 
-  constructor( params ){
-    super(params,new SphereMaterial())
+  constructor(){
+    super(new SphereMaterial())
   }
 
-  init (){  
-    const nodeCreated  = this.callBacks._nodeCreated
-    this.callBacks._nodeCreated = ( node, policy ) => {nodeCreated(node, policy, this)  }
-    this.primitive = new CubePrimitive( this.params, this.callBacks);
-    this.add(this.primitive) 
-    return this 
+  init (params){  
+    console.log(this.material.uniforms)
+    this.material.uniforms.radius.value = params.projectionRadius
+    return this.initPrimitive(new CubePrimitive( params, this.callBacks )) 
   }
 }
 
 export class QuadMesh extends Mesh{
-  constructor(params){
-    super(params, new QuadMaterial())
+  constructor(){
+    super(new QuadMaterial())
   }
 
-init (){ 
-    const nodeCreated  = this.callBacks._nodeCreated
-    this.callBacks._nodeCreated = ( node, policy ) => {nodeCreated(node, policy, this)  }
-    this.primitive = new QuadPrimitive( this.params, this.callBacks ); 
-    this.add(this.primitive)
-    return this 
+  init (params){ 
+    return this.initPrimitive(new QuadPrimitive( params, this.callBacks )) 
   }
 }
+
+/*
+  --example--
+
+  const sphere = new SphereMesh()
+  .nodeCreated ((node, policy, mesh)=>{ node.buildWorldBox().drawWorldBox(scene) })
+  .nodeDestroyed((node)=>{})
+  .nodeUpdated  ((node)=>{})
+  .init         ({
+    size: 4, 
+    resolution: 2, 
+    dimension: 10, 
+    levels: 4,
+    projectionRadius: 10,
+  })
+
+
+*/

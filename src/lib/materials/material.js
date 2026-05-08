@@ -78,7 +78,7 @@ export class SphereMaterial extends THREE.ShaderMaterial{
     const _params = Object.assign({
       vertMain : 'void vertMain(){}', 
       fragMain : 'void fragMain(){}', 
-      uniforms : {}
+      uniforms : {radius:{value:0}}
     },params)
 
     vertexShader   = vertexShader.replace('//inject uniforms',`uniform float radius;`)
