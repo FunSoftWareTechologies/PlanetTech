@@ -4,20 +4,17 @@ export function getMinLevelSize(size, levels){ return size / Math.pow(2, levels 
 
 
 
-export class Blueprint {
+export class Policy {
 
   constructor(params) { this.init(params) }
 
   init(params){
 
-    const size         = params.size         = params.size         ||  1
-    const resolution   = params.resolution   = params.resolution   ||  1
-    const dimension    = params.dimension    = params.dimension    ||  1
-    const levels       = params.levels       = params.levels       ||  1
-     
-    const nodeCreated  = params.nodeCreated  = params.nodeCreated  || ((node,payLoad)=>{})
-    const nodeDestroid = params.nodeDestroid = params.nodeDestroid || ((node,payLoad)=>{})
-    const nodeUpdated  = params.nodeUpdated  = params.nodeUpdated  || ((node,payLoad)=>{})
+    const size             = params.size             = params.size             ||  1
+    const resolution       = params.resolution       = params.resolution       ||  1
+    const dimension        = params.dimension        = params.dimension        ||  1
+    const levels           = params.levels           = params.levels           ||  1
+    const projectionRadius = params.projectionRadius = params.projectionRadius ||  0 
 
      this.config = {
       maxLevelSize:size,
@@ -29,9 +26,7 @@ export class Blueprint {
       scale: new THREE.Vector3(1, 1, 1),
       lodDistanceOffset: 1,
       displacmentScale:1,
-      nodeCreated,
-      nodeDestroid,
-      nodeUpdated
+      projectionRadius
      } 
 
     this.levels(levels);

@@ -4,7 +4,7 @@ import { SphereMaterial, QuadMaterial } from '../materials/material.js';
  
 export class Mesh extends THREE.BatchedMesh{
      
-  constructor( callBacks, material, primitive ){
+  constructor( params, material, primitive ){
 
     super(1,1,1,material)
 
@@ -26,15 +26,24 @@ export class Mesh extends THREE.BatchedMesh{
 
     this._sphere      = new THREE.Sphere();
 
+    this.params       = params
+
     this.primitive    = primitive
 
     this.updateWorldMatrix(true, false);
 
-    const nodeCreated  = callBacks.nodeCreated
-    
-    callBacks.nodeCreated = ( node, blueprint ) => { nodeCreated( node, blueprint, this ) }
- 
+    this.callBacks = {
+      _nodeCreated:   (node)=>node,
+      _nodeDestroyed: (node)=>node,
+      _nodeUpdated:   (node)=>node,
+    }
   }
+
+  nodeCreated  (fn){  this.callBacks._nodeCreated   = fn; return this}
+
+  nodeDestroyed(fn){  this.callBacks._nodeDestroyed = fn; return this}
+
+  nodeUpdated  (fn){  this.callBacks._nodeUpdated   = fn; return this}
 
   draw(node,blueprint){
 
@@ -89,30 +98,30 @@ export class Mesh extends THREE.BatchedMesh{
 
 
 export class SphereMesh extends Mesh{
-    
-  constructor(config, callBacks){
-    
-    super(callBacks,new SphereMaterial())
 
-    this.primitive = new CubePrimitive(config, callBacks)
-
-    this.add(this.primitive)
-
+  constructor( params ){
+    super(params,new SphereMaterial())
   }
 
+  init (){  
+    const nodeCreated  = this.callBacks._nodeCreated
+    this.callBacks._nodeCreated = ( node, policy ) => {nodeCreated(node, policy, this)  }
+    this.primitive = new CubePrimitive( this.params, this.callBacks);
+    this.add(this.primitive) 
+    return this 
+  }
 }
-  
 
 export class QuadMesh extends Mesh{
-    
-  constructor( config, callBacks ){
-    
-    super(callBacks ,new QuadMaterial())
-
-    this.primitive = new QuadPrimitive(config, callBacks)
-
-    this.add(this.primitive)
-
+  constructor(params){
+    super(params, new QuadMaterial())
   }
 
+init (){ 
+    const nodeCreated  = this.callBacks._nodeCreated
+    this.callBacks._nodeCreated = ( node, policy ) => {nodeCreated(node, policy, this)  }
+    this.primitive = new QuadPrimitive( this.params, this.callBacks ); 
+    this.add(this.primitive)
+    return this 
+  }
 }

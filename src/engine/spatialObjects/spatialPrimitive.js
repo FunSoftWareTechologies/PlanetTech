@@ -1,18 +1,20 @@
- 
 import * as THREE from 'three'
-import { Blueprint } from './bluePrint.js'
 import { QuadTree } from './spatialStructure.js'
-
+import { Policy } from './policy.js'
 
 export class Primitive extends QuadTree { 
 
-  constructor( config, callBacks, list = [], depth = 0 ) { 
+  constructor( params, callBacks , list = [], offset = 0 ) { 
 
-    const bluePrint = new Blueprint(config)
+    const policy = new Policy(params)
 
-    super( bluePrint, callBacks ) 
+    super( policy ) 
 
-    this.createDimensions(list, depth)
+    const _nodeCreated = callBacks._nodeCreated
+
+    callBacks._nodeCreated = (node) => _nodeCreated(node,policy)
+
+    this.createDimensions(list, offset, callBacks._nodeCreated)
 
   } 
 
@@ -20,9 +22,9 @@ export class Primitive extends QuadTree {
  
 export class QuadPrimitive extends Primitive { 
 
-  constructor( config, callBacks ) {  
+  constructor( params, callBacks ) {  
     
-    super( config, callBacks, [0] , 0) 
+    super( params, callBacks, [0], 0) 
   
   } 
 
@@ -30,14 +32,12 @@ export class QuadPrimitive extends Primitive {
 
 export class CubePrimitive extends Primitive { 
 
-  constructor( config, callBacks ) {  
+  constructor( params, callBacks ) {  
 
-    const { size: w, dimension: d  } = config
+    const { size: w, dimension: d  } = params
     
-    super( config, callBacks, [0,1,2,3,4,5] , (w / 2) * d ) 
+    super( params, callBacks, [0,1,2,3,4,5] , (w / 2) * d ) 
   
   } 
 
 }
-
-

@@ -51,30 +51,45 @@ import * as THREE from 'three'
  
 
 export class QuadMaterial extends THREE.ShaderMaterial{
+  constructor( params = {}){
 
-    constructor(params){
+    const _params = Object.assign({
+      vertMain : 'void vertMain(){}', 
+      fragMain : 'void fragMain(){}', 
+      uniforms : {}
+    },params)
 
-        super({fragmentShader,vertexShader})
+    vertexShader   = vertexShader.replace('void vertMain(){}',_params.vertMain )
+    fragmentShader = fragmentShader.replace('void fragMain(){}',_params.fragMain )
 
-    }
-
+    super({
+      fragmentShader ,
+      vertexShader , 
+      uniforms:_params.uniforms
+    })
+  }
 }
 
 
 export class SphereMaterial extends THREE.ShaderMaterial{
 
-    constructor( vertMain = 'void vertMain(){}', fragMain = 'void fragMain(){}' ){
+  constructor( params = {} ){
 
-        vertexShader   = vertexShader.replace('//inject uniforms',`uniform float radius;`)
+    const _params = Object.assign({
+      vertMain : 'void vertMain(){}', 
+      fragMain : 'void fragMain(){}', 
+      uniforms : {}
+    },params)
 
-        vertexShader   = vertexShader.replace('//inject',`world = vec4(normalize(world.xyz) * radius, 1.0);`)
+    vertexShader   = vertexShader.replace('//inject uniforms',`uniform float radius;`)
+    vertexShader   = vertexShader.replace('//inject',`world = vec4(normalize(world.xyz) * radius, 1.0);`)
+    vertexShader   = vertexShader.replace('void vertMain(){}',_params.vertMain )
+    fragmentShader = fragmentShader.replace('void fragMain(){}',_params.fragMain )
 
-        vertexShader   = vertexShader.replace('void vertMain(){}',vertMain )
-
-        fragmentShader = fragmentShader.replace('void fragMain(){}',fragMain )
-
-        super({fragmentShader,vertexShader,uniforms:{radius:{value:1}}})
-
-    }
-
+    super({
+      fragmentShader ,
+      vertexShader , 
+      uniforms:_params.uniforms
+    })
+  }
 }
