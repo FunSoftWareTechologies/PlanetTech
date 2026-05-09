@@ -12,3 +12,5 @@ export * from './src/engine/spatialObjects/policy.js'
 export * from './src/application/worldObject.js'
 
 export * from './src/lib/materials/material.js'
+
+export * from './src/engine/textuers/virtualTexture/virtualTexture.js'

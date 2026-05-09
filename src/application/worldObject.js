@@ -1,28 +1,11 @@
 import * as THREE from 'three'
 import { OcTree } from '../engine/spatialObjects/spatialStructure.js'
+import { Mesh } from '../lib/mesh/mesh.js'
 
-
-export class WorldObject extends THREE.Mesh {
+export class WorldObject extends Mesh {
 
     constructor(){
         super()
     }
-
-    initOctree( config,callBacks ){
-        this.octree = new OcTree( config,callBacks)
-        return this
-    }
-
-    insert( bounds, dynamic = false ){
-        this.octree.insert({bounds,dynamic})  
-        return this     
-    }
-
-    initPhysics( ){
-
-    }
-
-    onBeforeRender(){
-        
-    }
+ 
 }

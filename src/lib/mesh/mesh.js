@@ -8,22 +8,16 @@ export class Mesh extends THREE.BatchedMesh{
 
     super(1,1,1,material)
 
-    this.frustumCulled = false;
-
+    this.frustumCulled          = false;
     this.perObjectFrustumCulled = false;
 
     this.__maxInstanceCount = 0
-
     this.__maxVertexCount   = 0
-
     this.__maxIndexCount    = 0
 
     this._frustum     = new THREE.Frustum();
-
     this._pMat        = new THREE.Matrix4();
-
     this._scratchBox  = new THREE.Box3();
-
     this._sphere      = new THREE.Sphere();
 
     this.primitive    = primitive
@@ -37,7 +31,7 @@ export class Mesh extends THREE.BatchedMesh{
     }
   }
 
-  nodeCreated  (fn){  this.callBacks._nodeCreated   = fn; return this}
+  nodeCreated  (fn){ this.callBacks._nodeCreated = ( node, policy ) => fn(node, policy, this); return this }
 
   nodeDestroyed(fn){  this.callBacks._nodeDestroyed = fn; return this}
 
@@ -93,53 +87,52 @@ export class Mesh extends THREE.BatchedMesh{
   }
   
   initPrimitive (primitive){
-     const nodeCreated  = this.callBacks._nodeCreated
-      this.callBacks._nodeCreated = ( node, policy ) => {nodeCreated(node, policy, this)  }
       this.primitive = primitive
       this.add(this.primitive) 
     return this
   }
-
 }
 
+export class QuadMesh extends Mesh{
+
+  constructor(mesh){ super(mesh) }
+
+  init (params){  return this.initPrimitive(new QuadPrimitive( params, this.callBacks )) }
+}
 
 export class SphereMesh extends Mesh{
 
-  constructor(){
-    super(new SphereMaterial())
-  }
+  constructor(mesh){ super(mesh) }
 
   init (params){  
-    console.log(this.material.uniforms)
     this.material.uniforms.radius.value = params.projectionRadius
     return this.initPrimitive(new CubePrimitive( params, this.callBacks )) 
   }
 }
 
-export class QuadMesh extends Mesh{
-  constructor(){
-    super(new QuadMaterial())
-  }
-
-  init (params){ 
-    return this.initPrimitive(new QuadPrimitive( params, this.callBacks )) 
-  }
-}
 
 /*
   --example--
 
-  const sphere = new SphereMesh()
-  .nodeCreated ((node, policy, mesh)=>{ node.buildWorldBox().drawWorldBox(scene) })
-  .nodeDestroyed((node)=>{})
-  .nodeUpdated  ((node)=>{})
-  .init         ({
+  const sphere = new SphereMesh({
+    vertMain : 'void vertMain(){}', 
+    fragMain : 'void fragMain(){}', 
+    uniforms : {radius:{value:0}}
+  })
+  .nodeCreated ((node, policy, mesh)=>{ 
+    node.buildWorldBox().drawWorldBox() 
+    mesh.draw(node,policy)
+  })
+  .nodeDestroyed ((node)=>{})
+  .nodeUpdated   ((node)=>{})
+  .init          ({
     size: 4, 
     resolution: 2, 
-    dimension: 10, 
+    dimension: 50, 
     levels: 4,
-    projectionRadius: 10,
+    projectionRadius: 1,
   })
 
+  scene.add(sphere)
 
 */

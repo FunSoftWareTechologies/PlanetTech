@@ -3,10 +3,9 @@ import * as THREE from 'three'
 export function getMinLevelSize(size, levels){ return size / Math.pow(2, levels - 1) }
 
 
-
 export class Policy {
 
-  constructor(params) { this.init(params) }
+  constructor() {   }
 
   init(params){
 
@@ -31,6 +30,7 @@ export class Policy {
 
     this.levels(levels);
     this.createArrayBuffers();
+    return this
   }
 
   levels(numOflvls) {

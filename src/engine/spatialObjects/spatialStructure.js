@@ -216,9 +216,9 @@ export class QuadTreeNode extends THREE.Object3D{
     return this
   }
 
-  drawWorldBox(scene,color = new THREE.Color(Math.random(),Math.random(),Math.random())){
+  drawWorldBox(color = new THREE.Color(Math.random(),Math.random(),Math.random())){
     const helper = new THREE.Box3Helper(this.worldData.box, color);
-    scene.add(helper);
+    this.add(helper);
     this.userData.debugBounds = helper;
     return this
   }
