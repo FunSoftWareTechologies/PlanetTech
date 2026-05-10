@@ -31,11 +31,20 @@ export class Mesh extends THREE.BatchedMesh{
     }
   }
 
-  nodeCreated  (fn){ this.callBacks._nodeCreated = ( node, policy ) => fn(node, policy, this); return this }
+  nodeCreated  (fn){ 
+    this.callBacks._nodeCreated = ( node, policy ) => fn(node, policy, this); 
+    return this 
+  }
 
-  nodeDestroyed(fn){  this.callBacks._nodeDestroyed = fn; return this}
+  nodeDestroyed(fn){  
+    this.callBacks._nodeDestroyed = fn; 
+    return this
+  }
 
-  nodeUpdated  (fn){  this.callBacks._nodeUpdated   = fn; return this}
+  nodeUpdated  (fn){  
+    this.callBacks._nodeUpdated   = fn; 
+    return this
+  }
 
   draw(node,blueprint){
 
@@ -95,14 +104,16 @@ export class Mesh extends THREE.BatchedMesh{
 
 export class QuadMesh extends Mesh{
 
-  constructor(mesh){ super(mesh) }
+  constructor(material){ super(material) }
 
-  init (params){  return this.initPrimitive(new QuadPrimitive( params, this.callBacks )) }
+  init (params){  
+    return this.initPrimitive(new QuadPrimitive( params, this.callBacks )) 
+  }
 }
 
 export class SphereMesh extends Mesh{
 
-  constructor(mesh){ super(mesh) }
+  constructor(material){ super(material) }
 
   init (params){  
     this.material.uniforms.radius.value = params.projectionRadius

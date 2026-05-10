@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { uniform } from 'three/tsl';
 
 
 
@@ -8,10 +9,15 @@ import * as THREE from 'three'
       #include <logdepthbuf_pars_vertex>
 
       #include <batching_pars_vertex>
- 
+
+      vec4 primitive;
+      
+      varying vec2 vUv;
+      varying vec4 vPrimitive;
+      //inject varying
+       
 
       //inject uniforms
- 
 
       void vertMain(){}
 
@@ -19,13 +25,17 @@ import * as THREE from 'three'
 
         #include <batching_vertex>   
  
-        vec4 world = batchingMatrix * vec4(position, 1.0);
+        primitive = batchingMatrix * vec4(position, 1.0);
 
-        //inject
+        vUv = uv;
+
+        vPrimitive = primitive;
+
+        //inject in main
  
         vertMain();
 
-        gl_Position = projectionMatrix * modelViewMatrix * world;
+        gl_Position = projectionMatrix * modelViewMatrix * primitive;
 
         #include <logdepthbuf_vertex>
       }
@@ -35,17 +45,21 @@ import * as THREE from 'three'
       #include <common>
       #include <logdepthbuf_pars_fragment>
 
+      varying vec2 vUv;
+      varying vec4 vPrimitive;
+      //inject varying
+
+      vec4 primitiveColor;
+
       void fragMain(){}
 
       void main() {
 
         #include <logdepthbuf_fragment>
 
-        vec4 worldColor = vec4(0.,0.,0.,1.);
-
         fragMain();
 
-        gl_FragColor = worldColor;
+        gl_FragColor = primitiveColor;
       }
     `;
  
@@ -71,6 +85,7 @@ export class QuadMaterial extends THREE.ShaderMaterial{
 }
 
 
+
 export class SphereMaterial extends THREE.ShaderMaterial{
 
   constructor( params = {} ){
@@ -81,11 +96,24 @@ export class SphereMaterial extends THREE.ShaderMaterial{
       uniforms : {radius:{value:0}}
     },params)
 
-    vertexShader   = vertexShader.replace('//inject uniforms',`uniform float radius;`)
-    vertexShader   = vertexShader.replace('//inject',`world = vec4(normalize(world.xyz) * radius, 1.0);`)
+    vertexShader   = vertexShader.replace('//inject varying',`
+    varying vec3  vWorldNormal;
+    //inject varying
+    `)
+    vertexShader   = vertexShader.replace('//inject uniforms',`
+    uniform float radius;
+    //inject uniforms
+    `)
+    vertexShader   = vertexShader.replace('//inject in main',`
+    primitive = vec4(normalize(primitive.xyz) * radius, 1.0);
+    vWorldNormal = normalize(mat3(modelMatrix) * primitive.xyz);
+    //inject in main`)
     vertexShader   = vertexShader.replace('void vertMain(){}',_params.vertMain )
     fragmentShader = fragmentShader.replace('void fragMain(){}',_params.fragMain )
-
+    fragmentShader   = fragmentShader.replace('//inject varying',`
+    varying vec3  vWorldNormal;
+    //inject varying
+    `)
     super({
       fragmentShader ,
       vertexShader , 

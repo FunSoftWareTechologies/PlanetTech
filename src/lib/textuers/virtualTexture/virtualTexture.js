@@ -15,4 +15,8 @@ export class VTTexture extends THREE.DataTexture{
         this.primitive = primitive
     }
 
+    onUpdate(){
+        console.log('sdhjdhj')
+    }
+
 }

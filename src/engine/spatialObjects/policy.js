@@ -1,14 +1,10 @@
 import * as THREE from 'three'
 
-export function getMinLevelSize(size, levels){ return size / Math.pow(2, levels - 1) }
-
+export function getMinLevelSize(size, levels, expo){ return size / Math.pow(expo, levels - 1) }
 
 export class Policy {
 
-  constructor() {   }
-
-  init(params){
-
+  constructor(params) {  
     const size             = params.size             = params.size             ||  1
     const resolution       = params.resolution       = params.resolution       ||  1
     const dimension        = params.dimension        = params.dimension        ||  1
@@ -16,8 +12,8 @@ export class Policy {
     const projectionRadius = params.projectionRadius = params.projectionRadius ||  0 
 
      this.config = {
+      levels,
       maxLevelSize:size,
-      minLevelSize:getMinLevelSize(size, levels),
       minResolution:resolution,
       maxResolution:undefined,
       dimensions:dimension,
@@ -27,8 +23,17 @@ export class Policy {
       displacmentScale:1,
       projectionRadius
      } 
+   }
 
-    this.levels(levels);
+  createOctreePolicy(){
+    this.config.minLevelSize=getMinLevelSize(this.config.maxLevelSize, this.config.levels, 8),
+    this.levels(this.config.levels);
+    return this
+  }
+
+  createQuadtreePolicy(){
+    this.config.minLevelSize=getMinLevelSize(this.config.maxLevelSize, this.config.levels, 2),
+    this.levels(this.config.levels);
     this.createArrayBuffers();
     return this
   }

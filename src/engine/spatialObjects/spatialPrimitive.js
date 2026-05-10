@@ -16,7 +16,7 @@ export class Primitive extends THREE.Object3D {
 
     //todo check parent  for any primitive and remove it 
 
-    this.spatialPrimitive  = new QuadTree(new Policy().init(params))
+    this.spatialPrimitive  = new QuadTree(new Policy(params).createQuadtreePolicy())
 
     const _nodeCreated     = callBacks._nodeCreated
 
@@ -32,7 +32,7 @@ export class Primitive extends THREE.Object3D {
 
     //todo check parent  for any primitive and remove it 
 
-    this.spatialPrimitive = new OcTree(new Policy())
+    this.spatialPrimitive = new OcTree(new Policy(params).createOctreePolicy())
 
     this.add(this.spatialPrimitive)
 
