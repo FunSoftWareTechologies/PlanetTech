@@ -1,22 +1,24 @@
 import * as THREE from 'three'
 
 
-export class VTTexture extends THREE.DataTexture{
-     _isVTTexture = true
+export class VirtualTexture extends THREE.DataTexture{
+    _isVirtualTexture = true
 
     constructor(...args){
         super(...args)
         this.needsUpdate = true
 
-        this.primitive   =  null
+        this.onUpdate = ()=>{ 
+        this.needsUpdate = true
+        console.log('sdhjdhj') 
+    }
+         
     }
 
     setPrimitive(primitive){
         this.primitive = primitive
     }
 
-    onUpdate(){
-        console.log('sdhjdhj')
-    }
+
 
 }
