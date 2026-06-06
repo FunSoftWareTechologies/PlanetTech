@@ -6,7 +6,7 @@
   "type": "module",
   "sidEffects": false,
   "scripts": {
-    "test": "vitest"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "Planet",
@@ -16,13 +16,10 @@
   "author": "Miguel Myers",
   "license": "ISC",
   "peerDependencies": {
-    "three": "0.177.0"
-  },
-  "devDependencies": {
-    "jsdom": "^25.0.1",
-    "vitest": "^1.6.0"
+    "three": "^0.184.0"
   },
   "dependencies": {
-    "@dimforge/rapier3d": "^0.14.0"
+    "@funsoftware/spatialprimitives": "file:../SpatialPrimitives",
+    "@funsoftware/virtualtexture": "file:../VirtualTexture"
   }
 }

@@ -1,16 +1,22 @@
 
-export * from './src/engine/spatialObjects/spatialPrimitive.js';
+/*import  * as PixelMachine      from  '@funsoftware/pixelmachine'
+import  * as SpatialPrimitives  from  '@funsoftware/spatialprimitives'
+import  * as VirtualTexture    from  '@funsoftware/virtualtexture'
+ 
+export const LIBRARY = {
+    PixelMachine,
+    SpatialPrimitives,
+    VirtualTexture
+}*/
 
-export * from './src/engine/spatialObjects/spatialStructure.js';
 
-export * from './src/lib/materials/material.js';
+export * from './src/lib/materials/worldMaterial.js'
+export * from './src/lib/meshes/worldMesh.js'
+export * from './src/lib/textures/virtualTexture/virtualTexture.js'
 
-export * from './src/lib/mesh/mesh.js';
+import {VTDebugger}   from  '@funsoftware/virtualtexture'
 
-export * from './src/engine/spatialObjects/policy.js'
 
-export * from './src/engine/application/worldObject.js'
-
-export * from './src/lib/materials/material.js'
-
-export * from './src/lib/textuers/virtualTexture/virtualTexture.js'
+export const EXTENTIONS = {
+    VirtualTexture:{ VTDebugger }
+}
