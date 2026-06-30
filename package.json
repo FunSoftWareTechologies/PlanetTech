@@ -1,5 +1,5 @@
 {
-  "name": "@funsoftware/planettech",
+  "name": "@funsoftware/openworlds",
   "version": "0.0.8-alpha.0.1.7",
   "description": "Toolkit for creating real 3D planets that can be transtioned from ground to sky.",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "keywords": [
     "Planet",
-    "Geospatial",
+    "terrain",
     "Three.js"
   ],
   "author": "Miguel Myers",

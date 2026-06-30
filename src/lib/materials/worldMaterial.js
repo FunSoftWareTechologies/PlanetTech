@@ -1,4 +1,5 @@
 import {SphereMaterial} from '@funsoftware/spatialprimitives'
+import {QuadMaterial} from '@funsoftware/spatialprimitives'
 
 const vertexShader =`
 
@@ -32,6 +33,26 @@ void main(){
 `
 
 export class WorldMaterial extends SphereMaterial{
+
+    constructor(params){
+
+        const _vUsers = params.vertexShader.replace('main','usersMainPT')
+
+        const _fUsers = params.fragmentShader.replace('main','usersMainPT')
+
+        const _v = vertexShader.replace('//inject usersMainPT',_vUsers)
+
+        const _f = fragmentShader.replace('//inject usersMainPT',_fUsers)
+
+        super({fragmentShader:_f,vertexShader:_v,uniforms:params.uniforms}) 
+
+        this._params = params
+        
+    }
+}
+
+
+export class QWorldMaterial extends QuadMaterial{
 
     constructor(params){
 
